@@ -1,0 +1,468 @@
+<!-- livebook:{"file_entries":[{"name":"perlgirl.png","type":"attachment"}]} -->
+
+# Untitled notebook
+
+```elixir
+Mix.install([
+  {:nx, "~> 0.10.0"},
+  {:kino, "~> 0.18.0"},
+  {:image, "~> 0.62.1"},
+  {:kino_zoetrope, "~> 0.11.0"}
+])
+
+Kino.nothing()
+```
+
+## Nx.Tensor
+
+```elixir
+Nx.tensor([1,2,3,4,5,6])
+|> Nx.reshape({3,2})
+|> Nx.reduce_max()
+|> Nx.to_number()
+# |> dbg
+```
+
+```elixir
+Nx.tensor([1,2,3,4,5,6])
+|> Nx.reshape({3,2})
+|> Nx.new_axis(-1)
+|> Nx.shape()
+```
+
+```elixir
+Nx.tensor([1,2,3,4,5,6], type: :f32)
+|> Nx.new_axis(-1)
+|> Nx.size()
+```
+
+```elixir
+Nx.tensor([1,2,3,4,5,6])
+|> Nx.reshape({3,:auto})
+|> Nx.new_axis(0)
+|> Nx.new_axis(2)
+|> Nx.new_axis(0)
+# |> dbg
+|> Nx.shape
+
+```
+
+```elixir
+Nx.tensor([1,2,3,4,5,6,7,8,9,10,11,12])
+|> Nx.reshape({4,:auto,1})
+|> KinoZoetrope.TensorStack.new()
+
+```
+
+```elixir
+[
+  Nx.tensor([1,2,3,4,5,6,7,8,9,10,11,12]) |> Nx.reshape({4,3,1}),
+  Nx.tensor([1,2,3,4,5,6,7,8,9,10,11,12]) |> Nx.reshape({3,4,1}),
+  Nx.tensor([1,2,3,4,5,6,7,8,9,10,11,12]) |> Nx.reshape({6,2,1}),
+  
+  Nx.tensor([1,2,3,4,5,6,7,8,9,10,11,12]) 
+    |> Nx.reshape({4,3,1}) 
+    |> Nx.transpose(axes: [1,0,2]),
+]
+|> KinoZoetrope.TensorStack.new(
+  title: "Some reshaped and transposed Tensors",
+  labels: ["3x4", "4x3", "2x6 with colormap", "transposed with colormap"],
+  cmaps: [
+    nil,nil,"rainbow","viridis",
+  ]
+)
+```
+
+```elixir
+Nx.broadcast(255, {64,64,1})
+|> KinoZoetrope.TensorStack.new(
+  titel: "64x64 from single value",
+  vmin: 0,
+  vmax: 255
+)
+```
+
+```elixir
+Nx.broadcast(128, {64, 64, 3})
+|> Nx.reshape({1, 64,64, 3})
+|> KinoZoetrope.TensorStack.new(
+  titel: "RGB image with all channels = 128 (gray)"
+)
+```
+
+```elixir
+Nx.stack([
+  Nx.broadcast(0, {64, 64}),
+  Nx.broadcast(100, {64, 64}),
+  Nx.broadcast(0, {64, 64}),
+  Nx.broadcast(100, {64, 64}),
+  Nx.broadcast(0, {64, 64}),
+  Nx.broadcast(100, {64, 64}),
+])
+|> KinoZoetrope.TensorStack.new(
+  titel: "Multiple images stacked to an animatio"
+)
+```
+
+```elixir
+Nx.stack([
+  Nx.concatenate([
+    Nx.broadcast(150, {64, 64,1}),
+    Nx.broadcast(0, {64, 64,1}),
+    Nx.broadcast(0, {64, 64,1}),
+    Nx.broadcast(255, {64, 64,1}),
+  ], axis: 2),
+  Nx.concatenate([
+    Nx.broadcast(0, {64, 64,1}),
+    Nx.broadcast(150, {64, 64,1}),
+    Nx.broadcast(0, {64, 64,1}),
+    Nx.broadcast(255, {64, 64,1}),
+  ], axis: 2),
+  Nx.concatenate([
+    Nx.broadcast(0, {64, 64,1}),
+    Nx.broadcast(0, {64, 64,1}),
+    Nx.broadcast(150, {64, 64,1}),
+    Nx.broadcast(255, {64, 64,1}),
+  ], axis: 2)
+])
+|> KinoZoetrope.TensorStack.new(
+  titel: "Multiple RGBA images stacked"
+)
+```
+
+```elixir
+[
+  Nx.broadcast(255, {64,64,1}) |> Nx.add(Nx.iota({1,64,1})), 
+  Nx.broadcast(255, {64,64,1}) |> Nx.add(Nx.iota({64,1,1}))
+]
+|> KinoZoetrope.TensorStack.new(
+  labels: ["Horizontal Gradient", "Vertical Gradient"]
+)
+```
+
+```elixir
+colormix = Nx.concatenate([
+  # red
+  Nx.broadcast(0, {64,64}) 
+    |> Nx.add(Nx.multiply(4, Nx.iota({64}))) 
+    |> Nx.reshape({64,64,1}),
+
+  #green
+  Nx.broadcast(0, {64,64}) 
+    |> Nx.add(Nx.multiply(4, Nx.iota({64,1}))) 
+    |> Nx.reshape({64,64,1}),
+
+  #blue
+  Nx.broadcast(152, {64,64,1}),
+
+  # alpha
+  Nx.broadcast(255, {64,64,1})
+], axis: 2)
+|> Nx.reshape({1, 64,64, 4})
+
+colormix
+|> KinoZoetrope.TensorStack.new(
+  titel: "Colorful gradient mixed from 3 channels"
+)
+```
+
+```elixir
+circle = Nx.add(
+  Nx.broadcast(0, {64,64,1})
+    |> Nx.add(Nx.iota({1,64,1}))
+    |> Nx.subtract(32)
+    |> Nx.pow(2), 
+  Nx.broadcast(0, {64,64,1})
+    |> Nx.add(Nx.iota({64,1,1}))
+    |> Nx.subtract(32)
+    |> Nx.pow(2)
+)
+|> Nx.sqrt()
+|> Nx.reshape({1, 64,64, 1})
+
+circle
+|> KinoZoetrope.TensorStack.new(
+  titel: "Circular masked generated via thresholding"
+)
+```
+
+```elixir
+mask = Nx.add(
+  Nx.broadcast(0, {64,64,1})
+    |> Nx.add(Nx.iota({1,64,1}))
+    |> Nx.subtract(32)
+    |> Nx.pow(2), 
+  Nx.broadcast(0, {64,64,1})
+    |> Nx.add(Nx.iota({64,1,1}))
+    |> Nx.subtract(32)
+    |> Nx.pow(2)
+)
+|> Nx.sqrt()
+|> Nx.less_equal(23)
+|> Nx.reshape({1, 64,64, 1})
+
+[
+  mask,
+  Nx.logical_not(mask)
+]
+|> KinoZoetrope.TensorStack.new(
+  titel: "Circular masked generated via thresholding",
+  labels: ["Inner", "Outer"]
+)
+```
+
+```elixir
+Nx.multiply(mask, colormix)
+|> KinoZoetrope.TensorStack.new(
+  titel: "Gradient cut with circular mask"
+)
+```
+
+```elixir
+size = 64
+
+gauss = Nx.add(
+  Nx.broadcast(0, {size,size,1})
+    |> Nx.add(Nx.iota({1,size,1}))
+    |> Nx.reshape({1, size,size})
+    |> Nx.subtract(size / 2 - 0.5)
+    |> Nx.pow(2), 
+  Nx.broadcast(0, {size,size,1})
+    |> Nx.add(Nx.iota({size,1,1}))
+    |> Nx.reshape({1, size,size})
+    |> Nx.subtract(size/2 - 0.5)
+    |> Nx.pow(2)
+)
+|> Nx.divide(Nx.pow(size/4, 2))
+|> Nx.negate()
+|> Nx.exp()
+
+gauss
+|> KinoZoetrope.TensorStack.new(
+  titel: "Gaussien Mask / Filter of size #{size}x#{size}"
+)
+```
+
+```elixir
+[
+  Nx.stack([
+    gauss,
+    gauss,
+    gauss,
+    Nx.broadcast(1.0, {1, 64, 64})
+  ],axis: 3) 
+  |> Nx.pow(0.4)
+  |> Nx.multiply(colormix)
+  |> Nx.multiply(1.5)
+  |> Nx.min(255),
+
+  Nx.stack([
+    Nx.broadcast(1.0, {1, 64, 64}),
+    Nx.broadcast(1.0, {1, 64, 64}),
+    gauss,
+    Nx.broadcast(1.0, {1, 64, 64})
+  ],axis: 3) 
+  |> Nx.multiply(colormix)
+  |> Nx.min(255),
+]
+|> KinoZoetrope.TensorStack.new(
+  titel: "Color gradient multiplied with gaussien mask",
+  labels: ["All channels multiplied", "Only blue channel masked out"]
+)
+```
+
+```elixir
+{:ok, img} = Image.open(Kino.FS.file_path("perlgirl.png"))
+{:ok, bin} = Vix.Vips.Image.write_to_binary(img)
+
+girl_col = bin 
+  |> Nx.from_binary(:u8) 
+  |> Nx.reshape({1, 64, 64, 4}) 
+
+girl_bw = bin |> Nx.from_binary(:u8) 
+|> Nx.reshape({64, 64, 4}) 
+# Discard alpha Channel
+|> Nx.slice_along_axis(0, 3, axis: 2)
+# average color channels
+|> Nx.mean(axes: [2])
+|> Nx.as_type(:u8)
+|> Nx.reshape({64, 64, 1})
+
+[
+  girl_col, 
+  girl_col |> Nx.transpose(axes: [3,1,2,0]), 
+  girl_bw
+] 
+|> KinoZoetrope.TensorStack.new(
+  titel: "Image read from the file system",
+  labels: ["RGBA Image", "Single Channel (Slider)", "Grayscale (mean)"]
+)
+```
+
+```elixir
+make_gauss = fn size -> 
+  Nx.add( Nx.broadcast(0, {size,size,1}) 
+    |> Nx.add(Nx.iota({1,size,1})) 
+    |> Nx.reshape({1, size,size, 1}) 
+    |> Nx.subtract(size / 2 - 0.5) 
+    |> Nx.pow(2), Nx.broadcast(0, {size,size,1}) 
+    |> Nx.add(Nx.iota({size,1,1})) 
+    |> Nx.reshape({1, size,size, 1})
+    |> Nx.subtract(size/2 - 0.5) 
+    |> Nx.pow(2) ) 
+    |> Nx.divide(Nx.pow(size/4, 2)) 
+    |> Nx.as_type(:f32)
+    |> Nx.negate() 
+    |> Nx.exp() 
+    |> then(&Nx.divide(&1, Nx.sum(&1)))
+    |> Nx.reshape({1,1,size,size})
+    |> Nx.broadcast({4, 1,size,size})
+end
+
+11
+|> then(&[
+  # Original RGBA
+  girl_col,
+
+  # Blurred Result
+  girl_col
+  |> Nx.transpose(axes: [0,3,1,2])
+  |> Nx.conv(make_gauss.(&1), padding: :same, feature_group_size: 4)
+  |> Nx.transpose(axes: [0,2,3,1]),
+
+  # single channel
+  girl_col |> Nx.transpose(axes: [3,1,2,0]),
+
+  # Filter
+  make_gauss.(&1) |> Nx.transpose(axes: [0,2,3,1]),
+
+  # Single channel result
+  girl_col
+  |> Nx.transpose(axes: [0,3,1,2])
+  |> Nx.conv(make_gauss.(&1), padding: :same, feature_group_size: 4)
+  |> Nx.transpose(axes: [1,2,3,0])
+])
+|> KinoZoetrope.TensorStack.new(
+  labels: [
+    "Original RGBA", 
+    "Result RGBA", 
+    "Single Channel (slider)", 
+    "Gaußian Filter", 
+    "Result Single Channel (slider)"
+  ]
+)
+```
+
+```elixir
+make_sobel = fn orientation -> 
+  Nx.tensor([
+    [-1,-2,-1],
+    [ 0, 0, 0],
+    [+1,+2,+1]
+  ])
+  |> Nx.transpose(axes: case orientation do 
+      :vertical -> [1,0]
+      :horizontal -> [0,1]
+    end)
+  |> Nx.reshape({1,1,3,3})
+  |> then(&Nx.concatenate([&1,&1,&1,Nx.broadcast(1, {1,1,3,3})], axis: 0))
+end
+
+
+for orient <- [:vertical, :horizontal] do 
+[
+  girl_col |> Nx.transpose(axes: [3,1,2,0]),
+  
+  make_sobel.(orient) |> Nx.transpose(axes: [0,2,3,1]),
+
+  girl_col
+  |> Nx.transpose(axes: [0,3,1,2])
+  |> Nx.divide(255)
+  |> Nx.conv(make_sobel.(orient), padding: :same, feature_group_size: 4)
+  |> Nx.transpose(axes: [1,2,3,0])
+]
+end
+|> List.flatten()
+|> KinoZoetrope.TensorStack.new(
+  labels: [
+    "Channel", "horizontal filter", "horizontal result", 
+    "Channel", "vertical filter", "vertical result", 
+  ],
+  cmap: "viridis"
+)
+```
+
+```elixir
+make_gauss = fn size -> 
+  Nx.add( Nx.broadcast(0, {size,size,1}) 
+    |> Nx.add(Nx.iota({1,size,1})) 
+    |> Nx.reshape({1, size,size, 1}) 
+    |> Nx.subtract(size / 2 - 0.5) 
+    |> Nx.pow(2), Nx.broadcast(0, {size,size,1}) 
+    |> Nx.add(Nx.iota({size,1,1})) 
+    |> Nx.reshape({1, size,size, 1})
+    |> Nx.subtract(size/2 - 0.5) 
+    |> Nx.pow(2) ) 
+    |> Nx.divide(Nx.pow(size/4, 2)) 
+    |> Nx.as_type(:f32)
+    |> Nx.negate() 
+    |> Nx.exp() 
+    |> then(&Nx.divide(&1, Nx.sum(&1)))
+    |> Nx.reshape({1,1,size,size})
+    |> Nx.broadcast({4, 1,size,size})
+end
+
+make_sobel = fn orientation -> 
+  Nx.tensor([
+    [-1,-2,-1],
+    [ 0, 0, 0],
+    [+1,+2,+1]
+  ])
+  |> Nx.transpose(axes: case orientation do 
+      :vertical -> [1,0]
+      :horizontal -> [0,1]
+    end)
+  |> Nx.reshape({1,1,3,3})
+  |> then(&Nx.concatenate([&1,&1,&1,Nx.broadcast(1, {1,1,3,3})], axis: 0))
+end
+
+hypot = fn a, b ->
+  Nx.sqrt(Nx.add(Nx.pow(a,2), Nx.pow(b,2)))
+end
+
+soft_girl_col = 
+  girl_col
+  |> Nx.transpose(axes: [0,3,1,2])
+  |> Nx.conv(make_gauss.(3), padding: :same, feature_group_size: 4)
+  |> Nx.transpose(axes: [0,2,3,1])
+
+
+verts = soft_girl_col
+  |> Nx.transpose(axes: [0,3,1,2])
+  |> Nx.divide(255)
+  |> Nx.conv(make_sobel.(:vertical), padding: :same, feature_group_size: 4)
+  |> Nx.transpose(axes: [1,2,3,0])
+
+horts = soft_girl_col
+  |> Nx.transpose(axes: [0,3,1,2])
+  |> Nx.divide(255)
+  |> Nx.conv(make_sobel.(:horizontal), padding: :same, feature_group_size: 4)
+  |> Nx.transpose(axes: [1,2,3,0])
+
+[
+  soft_girl_col |> Nx.transpose(axes: [3,1,2,0]),
+  verts,
+  horts,
+  Nx.atan2(verts, horts),
+  Nx.atan2(verts, horts),
+  Nx.greater_equal(hypot.(verts, horts), 0.5)
+  |> Nx.multiply(Nx.atan2(verts, horts))
+]
+|> KinoZoetrope.TensorStack.new(
+  labels: [
+    "Channel", "vertical result", "horizontal result", 
+    "Edge Orientation", "Edge Orientation", "maked Orientation", 
+  ],
+  cmaps: [nil, "viridis", "viridis", "hsv", nil, "viridis"]
+)
+```
