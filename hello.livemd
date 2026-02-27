@@ -297,7 +297,7 @@ mask = circle_radius
   # Sinc = (sin(x)/x)
   circle_radius|> Nx.sin() |> Nx.divide(circle_radius) |> then(&Nx.select(Nx.is_nan(&1), 1, &1)),
 
-  # Spiral Swirl
+  # Spiral 
   1..40//2 
   |> Enum.map(fn a ->
     circle_radius 
@@ -313,16 +313,26 @@ mask = circle_radius
   |> Nx.reshape({1, 1, 64,64}) |> Nx.fft2() |> Nx.reshape({1, 64,64, 1}) 
   |> Nx.abs() |> Nx.log(),
 
+  # Swirl
+  1..20
+  |> Enum.map(fn a ->
+    circle_radius
+    |> Nx.pow(0.25) 
+    |> Nx.multiply(a * 0.8)
+    |> Nx.add(circle_angle)  
+    |> Nx.subtract((:math.pi - 0.1) * a)
+    |> Nx.sin()
+  end) |> Nx.concatenate(axis: 0),
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Colorful Funny stuff",
   labels: [
     "Rings","Squashed Rings", "Animated Rings", 
-    "Sinc", "Spiral", "Spiral Fourier Transform"
+    "Sinc", "Spiral", "Spiral Fourier Transform", "Swirl"
   ],
   cmaps: [
     nil,"viridis","rainbow", 
-    "jet","spring","CMRmap"
+    "jet","managua","CMRmap", "plasma"
   ]
 )
 ```
@@ -770,7 +780,6 @@ world = Nx.tensor([
   [0,0,0,0,0,0,0,0,0,1,1,0],
   [0,0,0,0,0,0,0,0,0,1,0,0],
   [0,0,0,0,0,0,0,0,0,0,0,0],
-
 ])
 |> Nx.reshape({1,12,12,1})
 |> Nx.transpose(axes: [0,3,1,2])
