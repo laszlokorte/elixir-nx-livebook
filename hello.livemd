@@ -421,6 +421,7 @@ end
   |> Nx.transpose(axes: [1,2,3,0])
 ])
 |> KinoZoetrope.TensorStack.new(
+  titel: "Blurred Color Image",
   labels: [
     "Original RGBA", 
     "Result RGBA", 
@@ -462,6 +463,7 @@ for orient <- [:vertical, :horizontal] do
 end
 |> List.flatten()
 |> KinoZoetrope.TensorStack.new(
+  titel: "Edge Detection via Sobel Filter",
   labels: [
     "Single Channel (slider)", "horizontal filter", "horizontal result", 
     "Single Channel (slider)", "vertical filter", "vertical result", 
@@ -542,9 +544,10 @@ orient = Nx.atan2(verts, horts)
   |> Nx.multiply(orient)
 ]
 |> KinoZoetrope.TensorStack.new(
+  titel: "Edge Orientation",
   labels: [
     "Single Channel (slider)", "Vertical Result", "Horizontal Result", 
-    "Edge Orientation", "Edge Orientation", "msaked orientation", 
+    "Edge Orientation", "Edge Orientation", "masked orientation", 
   ],
   cmaps: [nil, "viridis", "viridis", "gray", "hsv", "hsv"]
 )
