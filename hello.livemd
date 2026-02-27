@@ -1,6 +1,6 @@
 <!-- livebook:{"file_entries":[{"name":"perlgirl.png","type":"attachment"}]} -->
 
-# Untitled notebook
+# Introduction to Elixir Nx
 
 ```elixir
 Mix.install([
@@ -167,47 +167,125 @@ colormix
 ```
 
 ```elixir
-circle = Nx.add(
-  Nx.broadcast(0, {64,64,1})
-    |> Nx.add(Nx.iota({1,64,1}))
-    |> Nx.subtract(32)
-    |> Nx.pow(2), 
-  Nx.broadcast(0, {64,64,1})
-    |> Nx.add(Nx.iota({64,1,1}))
-    |> Nx.subtract(32)
-    |> Nx.pow(2)
-)
-|> Nx.sqrt()
-|> Nx.reshape({1, 64,64, 1})
+defmodule UsingOperators do 
+  import Nx.Defn
 
-circle
+  # Operatoren können in defn benutzt werden
+  defn some_calculation(tensor) do
+    600 - Nx.abs(tensor - 7*7 / 2) ** 1.5
+  end
+end
+
+UsingOperators.some_calculation(Nx.iota({7,7, 1}))
+|> KinoZoetrope.TensorStack.new()
+```
+
+```elixir
+rad = 32
+diam = 2*rad
+
+dx2 = Nx.iota({1,diam,1})
+  |> Nx.broadcast({diam,diam,1})
+  |> Nx.subtract(rad)
+  |> Nx.pow(2)
+
+dy2 = Nx.iota({diam,1,1})
+  |> Nx.broadcast({diam,diam,1})
+  |> Nx.subtract(rad)
+  |> Nx.pow(2)
+
+circle = Nx.add(dx2, dy2) |> Nx.sqrt() 
+  |> Nx.reshape({1, diam,diam, 1})
+
+[dx2, dy2, circle]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Circular masked generated via thresholding"
+  titel: "Circular masked generated via thresholding",
+  labels: ["Distance y²", "Distance y²", "Radius"]
 )
 ```
 
 ```elixir
-mask = Nx.add(
-  Nx.broadcast(0, {64,64,1})
-    |> Nx.add(Nx.iota({1,64,1}))
-    |> Nx.subtract(32)
-    |> Nx.pow(2), 
-  Nx.broadcast(0, {64,64,1})
-    |> Nx.add(Nx.iota({64,1,1}))
-    |> Nx.subtract(32)
-    |> Nx.pow(2)
-)
-|> Nx.sqrt()
-|> Nx.less_equal(23)
-|> Nx.reshape({1, 64,64, 1})
+mask = circle
+  |> Nx.less_equal(23)
+  |> Nx.reshape({1, 64,64, 1})
 
 [
+  circle,
   mask,
-  Nx.logical_not(mask)
+  mask |> Nx.logical_not(),
+  circle |> Nx.multiply(0.5) |> Nx.sin,
+  circle |> Nx.pow(0.3) |> Nx.multiply(10) |> Nx.sin(),
+  
+  5..40//2 
+  |> Enum.map(&Nx.sin(Nx.multiply(Nx.pow(circle, 2/&1), 2*&1))) 
+  |> Nx.concatenate(axis: 0)
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Circular masked generated via thresholding",
-  labels: ["Inner", "Outer"]
+  labels: ["Circle", "Inner", "Outer","Rings","Squashed Rings", "Animated Rings"],
+  cmaps: [nil,nil,nil,nil,"viridis","rainbow"]
+)
+```
+
+```elixir
+Enum.zip(
+  1..140 |> Enum.map(&:math.sin(&1/3)*20), 
+  20..140 |> Enum.map(&:math.sin(&1/7)*17)
+)
+|> Enum.map(
+  fn {x,y} -> 
+    Nx.add(
+      Nx.iota({1,diam,1})
+        |> Nx.broadcast({diam,diam,1})
+        |> Nx.subtract(rad + x)
+        |> Nx.pow(2), 
+        
+      Nx.iota({diam,1,1})
+        |> Nx.broadcast({diam,diam,1})
+        |> Nx.subtract(rad + y)
+        |> Nx.pow(2)
+    )
+    |> Nx.sqrt()
+    |> Nx.reshape({1, diam,diam, 1})
+  end
+)
+|> Nx.concatenate(axis: 0)
+|> Nx.less_equal(10)
+|> KinoZoetrope.TensorStack.new(
+  titel: "Animated Mask",
+  cmap: "viridis"
+)
+```
+
+```elixir
+1..3
+|> Enum.map(fn c ->
+  Enum.zip(
+    1..90 |> Enum.map(&:math.sin(&1/17.0+c)*20), 
+    1..90 |> Enum.map(&:math.cos(c*&1/13.0+c)*17)
+  )
+  |> Enum.map(&Nx.add(
+      Nx.iota({1,diam,1})
+      |> Nx.broadcast({diam,diam,1})
+      |> Nx.subtract(rad+ elem(&1, 0))
+      |> Nx.pow(2), 
+      Nx.iota({diam, 1,1})
+      |> Nx.broadcast({diam,diam,1})
+      |> Nx.subtract(rad+elem(&1, 1))
+      |> Nx.pow(2)
+  )
+  |> Nx.reshape({1, diam,diam, 1})
+  )
+  |> Nx.concatenate(axis: 0)  
+  |> Nx.sqrt()
+end)
+|> Nx.concatenate(axis: 3) 
+|> then(&Nx.subtract(1, &1))
+|> then(&Nx.subtract(&1, Nx.reduce_min(&1)))
+|> then(&Nx.divide(&1, Nx.reduce_max(&1)))
+|> Nx.multiply(255)
+|> KinoZoetrope.TensorStack.new(
+  titel: "Animated Color channels"
 )
 ```
 
@@ -239,7 +317,7 @@ gauss = Nx.add(
 
 gauss
 |> KinoZoetrope.TensorStack.new(
-  titel: "Gaussien Mask / Filter of size #{size}x#{size}"
+  titel: "Gaußian Mask / Filter of size #{size}x#{size}"
 )
 ```
 
@@ -365,7 +443,7 @@ make_sobel = fn orientation ->
       :horizontal -> [0,1]
     end)
   |> Nx.reshape({1,1,3,3})
-  |> then(&Nx.concatenate([&1,&1,&1,Nx.broadcast(1, {1,1,3,3})], axis: 0))
+  |> then(&Nx.concatenate([&1,&1,&1,Nx.broadcast(1/9.0, {1,1,3,3})], axis: 0))
 end
 
 
@@ -385,8 +463,8 @@ end
 |> List.flatten()
 |> KinoZoetrope.TensorStack.new(
   labels: [
-    "Channel", "horizontal filter", "horizontal result", 
-    "Channel", "vertical filter", "vertical result", 
+    "Single Channel (slider)", "horizontal filter", "horizontal result", 
+    "Single Channel (slider)", "vertical filter", "vertical result", 
   ],
   cmap: "viridis"
 )
@@ -394,7 +472,8 @@ end
 
 ```elixir
 make_gauss = fn size -> 
-  Nx.add( Nx.broadcast(0, {size,size,1}) 
+  Nx.add( 
+    Nx.broadcast(0, {size,size,1}) 
     |> Nx.add(Nx.iota({1,size,1})) 
     |> Nx.reshape({1, size,size, 1}) 
     |> Nx.subtract(size / 2 - 0.5) 
@@ -402,14 +481,15 @@ make_gauss = fn size ->
     |> Nx.add(Nx.iota({size,1,1})) 
     |> Nx.reshape({1, size,size, 1})
     |> Nx.subtract(size/2 - 0.5) 
-    |> Nx.pow(2) ) 
-    |> Nx.divide(Nx.pow(size/4, 2)) 
-    |> Nx.as_type(:f32)
-    |> Nx.negate() 
-    |> Nx.exp() 
-    |> then(&Nx.divide(&1, Nx.sum(&1)))
-    |> Nx.reshape({1,1,size,size})
-    |> Nx.broadcast({4, 1,size,size})
+    |> Nx.pow(2)
+  ) 
+  |> Nx.divide(Nx.pow(size/4, 2)) 
+  |> Nx.as_type(:f32)
+  |> Nx.negate() 
+  |> Nx.exp() 
+  |> then(&Nx.divide(&1, Nx.sum(&1)))
+  |> Nx.reshape({1,1,size,size})
+  |> Nx.broadcast({4, 1,size,size})
 end
 
 make_sobel = fn orientation -> 
@@ -423,7 +503,7 @@ make_sobel = fn orientation ->
       :horizontal -> [0,1]
     end)
   |> Nx.reshape({1,1,3,3})
-  |> then(&Nx.concatenate([&1,&1,&1,Nx.broadcast(1, {1,1,3,3})], axis: 0))
+  |> then(&Nx.concatenate([&1,&1,&1,Nx.broadcast(1/9.0, {1,1,3,3})], axis: 0))
 end
 
 hypot = fn a, b ->
@@ -449,20 +529,183 @@ horts = soft_girl_col
   |> Nx.conv(make_sobel.(:horizontal), padding: :same, feature_group_size: 4)
   |> Nx.transpose(axes: [1,2,3,0])
 
+orient = Nx.atan2(verts, horts)
+
 [
   soft_girl_col |> Nx.transpose(axes: [3,1,2,0]),
   verts,
   horts,
-  Nx.atan2(verts, horts),
-  Nx.atan2(verts, horts),
-  Nx.greater_equal(hypot.(verts, horts), 0.5)
-  |> Nx.multiply(Nx.atan2(verts, horts))
+  orient,
+  orient,
+  hypot.(verts, horts) 
+  |> Nx.greater_equal(0.5)
+  |> Nx.multiply(orient)
 ]
 |> KinoZoetrope.TensorStack.new(
   labels: [
-    "Channel", "vertical result", "horizontal result", 
-    "Edge Orientation", "Edge Orientation", "maked Orientation", 
+    "Single Channel (slider)", "Vertical Result", "Horizontal Result", 
+    "Edge Orientation", "Edge Orientation", "msaked orientation", 
   ],
-  cmaps: [nil, "viridis", "viridis", "hsv", nil, "viridis"]
+  cmaps: [nil, "viridis", "viridis", "gray", "hsv", "hsv"]
+)
+```
+
+## Game of Life
+
+```elixir
+world = Nx.tensor([
+  [0,0,1,0,0,0,0,0,0,0,0],
+  [1,0,1,0,0,0,0,0,0,0,0],
+  [0,1,1,0,0,0,0,1,0,0,0],
+  [0,0,0,0,0,0,0,0,1,1,0],
+  [0,0,0,0,0,0,0,1,1,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,1,0,0,0,0,0,0,0,0],
+  [0,0,0,1,0,0,0,0,0,0,0],
+  [0,1,1,1,0,0,0,1,0,1,0],
+  [0,0,0,0,0,0,0,0,1,1,0],
+  [0,0,0,0,0,0,0,0,1,0,0],
+])
+|> Nx.reshape({1,11,11,1})
+
+gol_filter = Nx.tensor([
+  [1.0,1.0,1.0],
+  [1.0,0.5,1.0],
+  [1.0,1.0,1.0]
+])
+|> Nx.reshape({1,3,3,1})
+  
+[
+  Nx.subtract(1, world),
+  gol_filter,
+] |> KinoZoetrope.TensorStack.new(
+  titel: "Game of Life",
+  vmin: 0,
+  vmax: 1,
+  labels: ["World (inverted)", "Filter Kernel"]
+)
+```
+
+```elixir
+world = Nx.tensor([
+  [0,0,0,1,0,0,0,0,0,0,0,0],
+  [0,1,0,1,0,0,0,0,0,0,0,0],
+  [0,0,1,1,0,0,0,0,1,0,0,0],
+  [0,0,0,0,0,0,0,0,0,1,1,0],
+  [0,0,0,0,0,0,0,0,1,1,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,1,0,0,0,0,0,0,0,0],
+  [0,0,0,0,1,0,0,0,0,0,0,0],
+  [0,0,1,1,1,0,0,0,1,0,1,0],
+  [0,0,0,0,0,0,0,0,0,1,1,0],
+  [0,0,0,0,0,0,0,0,0,1,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0],
+
+])
+|> Nx.reshape({1,12,12,1})
+|> Nx.transpose(axes: [0,3,1,2])
+
+
+gol_filter = Nx.tensor([
+  [1.0,1.0,1.0],
+  [1.0,0.3,1.0],
+  [1.0,1.0,1.0],
+])
+|> Nx.reshape({1,1,3,3})
+
+circular_pad_2d = fn tensor, pad_h, pad_w ->
+  {_n, _c, h, w} = Nx.shape(tensor)
+  h_idx =
+    Nx.remainder(
+      Nx.add(h, Nx.subtract(Nx.iota({h + 2 * pad_h}), pad_h)),
+      h
+    )
+  w_idx =
+    Nx.remainder(
+      Nx.add(w, Nx.subtract(Nx.iota({w + 2 * pad_w}), pad_w)),
+      w
+    )
+  
+  tensor
+  |> Nx.take(h_idx, axis: 2)
+  |> Nx.take(w_idx, axis: 3)
+end
+
+do_step = fn state -> 
+  circular_pad_2d.(state, 1,1)
+  |> Nx.conv(gol_filter)
+  |> Nx.subtract(3)
+  |> Nx.abs()
+  |> Nx.less(1)
+end
+
+[
+  Stream.iterate(world, do_step)
+    |> Enum.take(40)
+    |> Enum.drop(1)
+    |> Enum.map(&Nx.transpose(Nx.subtract(1, &1), axes: [0,2,3,1]))
+    |> Nx.concatenate(),
+  
+  Stream.iterate(world, do_step)
+    |> Enum.take(40)
+    |> Enum.map(&Nx.transpose(Nx.subtract(1, &1), axes: [0,2,3,1]))
+    |> Nx.concatenate(),
+    
+  gol_filter|> Nx.reshape({1,3,3,1})
+]
+|> KinoZoetrope.TensorStack.new(
+  titel: "Game of Life",
+  labels: ["World (Prev)" , "World (next)", "Filter Kernel"],
+  vmin: 0,
+  vmax: 1
+)
+```
+
+```elixir
+world = Nx.tensor([[
+  [0,0,0,1,0,0,0,0,0,0,0,0],
+  [0,1,0,1,0,0,0,0,0,0,0,0],
+  [0,0,1,1,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0],
+]])
+
+gol_filter_spectrum = Nx.fft2(Nx.tensor([
+  [0.5,1,0,0,0,0,0,0,0,0,0,1.0],
+  [1.0,1,0,0,0,0,0,0,0,0,0,1.0],
+  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
+  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
+  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
+  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
+  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
+  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
+  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
+  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
+  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
+  [1.0,1.0,0,0,0,0,0,0,0,0,0,1.0],
+]))
+
+
+do_step = fn state -> 
+  Nx.ifft2(Nx.multiply(Nx.fft2(state), gol_filter_spectrum))
+  |> Nx.subtract(3)
+  |> Nx.abs()
+  |> Nx.less(1)
+end
+
+Stream.iterate(world, do_step)
+|> Enum.take(100)
+|> Enum.map(&Nx.reshape(Nx.subtract(1, &1), {1,12,12,1}))
+|> Nx.concatenate()
+|> KinoZoetrope.TensorStack.new(
+  titel: "Game of Life",
+  labels: ["World (Inverted)"]
 )
 ```
