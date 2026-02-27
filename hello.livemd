@@ -1,4 +1,4 @@
-<!-- livebook:{"file_entries":[{"name":"perlgirl.png","type":"attachment"}]} -->
+<!-- livebook:{"file_entries":[{"name":"hex.png","type":"attachment"},{"name":"perlgirl.png","type":"attachment"}]} -->
 
 # Introduction to Elixir Nx
 
@@ -7,7 +7,7 @@ Mix.install([
   {:nx, "~> 0.10.0"},
   {:kino, "~> 0.18.0"},
   {:image, "~> 0.62.1"},
-  {:kino_zoetrope, "~> 0.11.0"}
+  {:kino_zoetrope, "~> 0.12.0"}
 ])
 
 Kino.nothing()
@@ -15,33 +15,42 @@ Kino.nothing()
 
 ## Nx.Tensor
 
+The goal of this notebook is a playful introduction to image processing and tensor programming via Elixir Nx.
+
+<!-- livebook:{"break_markdown":true} -->
+
+A Tensor is a generalization of matrices into higher dimensions. As programmer you can think of a Tensor as an n-dimensional array.
+
 ```elixir
+# Create a new tensor of 6 elements
 Nx.tensor([1,2,3,4,5,6])
-|> Nx.reshape({3,2})
-|> Nx.reduce_max()
-|> Nx.to_number()
+# change the tensor from being 1-dimensional into 2-dimensional
+# with 3 rows across the first dimension and 2 columns along the second dimension
+|> Nx.reshape({3, 2}) # still 6 = 3x2 elements
+|> Nx.reduce_max() # find the largest value in the tensor
+|> Nx.to_number() # extract a single number from a 0-dimensional tensor
 # |> dbg
 ```
 
 ```elixir
 Nx.tensor([1,2,3,4,5,6])
-|> Nx.reshape({3,2})
-|> Nx.new_axis(-1)
-|> Nx.shape()
+|> Nx.reshape({3, 2})
+|> Nx.new_axis(-1) # new dimensions can be added
+|> Nx.shape() # ask the tensor for its shape
 ```
 
 ```elixir
 Nx.tensor([1,2,3,4,5,6], type: :f32)
 |> Nx.new_axis(-1)
-|> Nx.size()
+|> Nx.size() # the total number of elements in the tensor
 ```
 
 ```elixir
 Nx.tensor([1,2,3,4,5,6])
-|> Nx.reshape({3,:auto})
-|> Nx.new_axis(0)
-|> Nx.new_axis(2)
-|> Nx.new_axis(0)
+|> Nx.reshape({3, :auto})
+|> Nx.new_axis(0) # dimensions can be added
+|> Nx.new_axis(2) # in different
+|> Nx.new_axis(0) # places
 # |> dbg
 |> Nx.shape
 
@@ -49,9 +58,11 @@ Nx.tensor([1,2,3,4,5,6])
 
 ```elixir
 Nx.tensor([1,2,3,4,5,6,7,8,9,10,11,12])
-|> Nx.reshape({4,:auto,1})
-|> KinoZoetrope.TensorStack.new()
-
+|> Nx.reshape({4, :auto, 1})
+# We can view 2d, 3d and 4d tensors as bitmap images
+|> KinoZoetrope.TensorStack.new(
+  titel: "A tensor plotted as 2D grayscale bitmap"
+)
 ```
 
 ```elixir
@@ -65,10 +76,10 @@ Nx.tensor([1,2,3,4,5,6,7,8,9,10,11,12])
     |> Nx.transpose(axes: [1,0,2]),
 ]
 |> KinoZoetrope.TensorStack.new(
-  title: "Some reshaped and transposed Tensors",
+  titel: "Some reshaped and transposed Tensors",
   labels: ["3x4", "4x3", "2x6 with colormap", "transposed with colormap"],
   cmaps: [
-    nil,nil,"rainbow","viridis",
+    nil, nil, "rainbow", "viridis",
   ]
 )
 ```
@@ -91,16 +102,25 @@ Nx.broadcast(128, {64, 64, 3})
 ```
 
 ```elixir
+Nx.broadcast(200, {64, 64, 4})
+|> Nx.reshape({1, 64,64, 4})
+|> KinoZoetrope.TensorStack.new(
+  titel: "RGBA image with all channels = 200 (gray transparent)"
+)
+```
+
+```elixir
 Nx.stack([
   Nx.broadcast(0, {64, 64}),
   Nx.broadcast(100, {64, 64}),
-  Nx.broadcast(0, {64, 64}),
-  Nx.broadcast(100, {64, 64}),
-  Nx.broadcast(0, {64, 64}),
-  Nx.broadcast(100, {64, 64}),
+  Nx.broadcast(20, {64, 64}),
+  Nx.broadcast(50, {64, 64}),
+  Nx.broadcast(30, {64, 64}),
+  Nx.broadcast(20, {64, 64}),
 ])
 |> KinoZoetrope.TensorStack.new(
-  titel: "Multiple images stacked to an animatio"
+  titel: "Multiple images stacked to an animation",
+  labels: ["3D tensor"]
 )
 ```
 
@@ -132,10 +152,11 @@ Nx.stack([
 
 ```elixir
 [
-  Nx.broadcast(255, {64,64,1}) |> Nx.add(Nx.iota({1,64,1})), 
-  Nx.broadcast(255, {64,64,1}) |> Nx.add(Nx.iota({64,1,1}))
+  Nx.iota({1,64,1}) |> Nx.divide(63) |> Nx.broadcast({64,64,1}), 
+  Nx.iota({64,1,1}) |> Nx.divide(63) |> Nx.broadcast({64,64,1}) 
 ]
 |> KinoZoetrope.TensorStack.new(
+  titel: "Gradients",
   labels: ["Horizontal Gradient", "Vertical Gradient"]
 )
 ```
@@ -143,24 +164,46 @@ Nx.stack([
 ```elixir
 colormix = Nx.concatenate([
   # red
-  Nx.broadcast(0, {64,64}) 
-    |> Nx.add(Nx.multiply(4, Nx.iota({64}))) 
-    |> Nx.reshape({64,64,1}),
+  Nx.iota({64, 1, 1})
+    |> Nx.multiply(4)
+    |> Nx.broadcast({64,64,1}),
 
   #green
-  Nx.broadcast(0, {64,64}) 
-    |> Nx.add(Nx.multiply(4, Nx.iota({64,1}))) 
-    |> Nx.reshape({64,64,1}),
+  Nx.iota({1, 64, 1})
+    |> Nx.multiply(4)
+    |> Nx.broadcast({64,64,1}),
 
   #blue
-  Nx.broadcast(152, {64,64,1}),
+  Nx.tensor(152) |>
+  Nx.broadcast({64,64,1}),
 
   # alpha
-  Nx.broadcast(255, {64,64,1})
+  Nx.tensor(255) |>
+  Nx.broadcast({64,64,1})
 ], axis: 2)
 |> Nx.reshape({1, 64,64, 4})
 
+[
+  colormix | 
+  0..2 |> Enum.map(&Nx.take(colormix, Nx.tensor([&1]), axis: 3))
+]
+|> KinoZoetrope.TensorStack.new(
+  titel: "Colorful gradient mixed from 3 channels",
+  labels: ["RGB", "Red", "Green", "Blue"],
+  vmin: 0,
+  vmax: 255
+)
+```
+
+```elixir
 colormix
+|> Nx.multiply(Nx.concatenate([
+  1 |> Nx.broadcast({1,64,64,1}), # R
+  1 |> Nx.broadcast({1,64,64,1}), # G
+  1 |> Nx.broadcast({1,64,64,1}), # B
+  # Alpha Gradient
+  Nx.iota({1,64,1}) |> Nx.divide(64) |> Nx.broadcast({1, 64,64,1}),
+], axis: 3))
 |> KinoZoetrope.TensorStack.new(
   titel: "Colorful gradient mixed from 3 channels"
 )
@@ -170,60 +213,117 @@ colormix
 defmodule UsingOperators do 
   import Nx.Defn
 
-  # Operatoren können in defn benutzt werden
+  # Operatoren können in `defn` benutzt werden
   defn some_calculation(tensor) do
-    600 - Nx.abs(tensor - 7*7 / 2) ** 1.5
+    600 - Nx.abs(tensor - 7 * 7 / 2) ** 2
   end
 end
 
-UsingOperators.some_calculation(Nx.iota({7,7, 1}))
-|> KinoZoetrope.TensorStack.new()
+Nx.iota({7,7, 1})
+|> UsingOperators.some_calculation()
+|> KinoZoetrope.TensorStack.new(
+  titel: "Some quadradic gradient",
+  cmap: "copper"
+)
 ```
 
 ```elixir
 rad = 32
 diam = 2*rad
 
-dx2 = Nx.iota({1,diam,1})
+dx = Nx.iota({1,diam,1})
   |> Nx.broadcast({diam,diam,1})
   |> Nx.subtract(rad)
-  |> Nx.pow(2)
+dx2 = dx|> Nx.pow(2)
 
-dy2 = Nx.iota({diam,1,1})
+dy = Nx.iota({diam,1,1})
   |> Nx.broadcast({diam,diam,1})
   |> Nx.subtract(rad)
-  |> Nx.pow(2)
+dy2 = dy |> Nx.pow(2)
 
-circle = Nx.add(dx2, dy2) |> Nx.sqrt() 
+circle_radius = Nx.add(dx2, dy2) |> Nx.sqrt() 
   |> Nx.reshape({1, diam,diam, 1})
 
-[dx2, dy2, circle]
+
+circle_angle = Nx.atan2(dy, dx)
+circle2_angle = Nx.atan2(dy2, dx2)
+
+[dx2, dy2, circle_radius, circle_angle, circle2_angle]
 |> KinoZoetrope.TensorStack.new(
   titel: "Circular masked generated via thresholding",
-  labels: ["Distance y²", "Distance y²", "Radius"]
+  labels: ["Distance y²", "Distance y²", "Radius","Angle", "Angle Squared"],
+  cmaps: [nil,nil,nil,"hsv","rainbow"]
 )
 ```
 
 ```elixir
-mask = circle
+mask = circle_radius
+  # threshold radius
   |> Nx.less_equal(23)
   |> Nx.reshape({1, 64,64, 1})
 
 [
-  circle,
+  # Circle
+  circle_radius,
+  # Inner Mask
   mask,
+  # Outer Mask
   mask |> Nx.logical_not(),
-  circle |> Nx.multiply(0.5) |> Nx.sin,
-  circle |> Nx.pow(0.3) |> Nx.multiply(10) |> Nx.sin(),
-  
-  5..40//2 
-  |> Enum.map(&Nx.sin(Nx.multiply(Nx.pow(circle, 2/&1), 2*&1))) 
-  |> Nx.concatenate(axis: 0)
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Circular masked generated via thresholding",
-  labels: ["Circle", "Inner", "Outer","Rings","Squashed Rings", "Animated Rings"],
-  cmaps: [nil,nil,nil,nil,"viridis","rainbow"]
+  labels: [
+    "Circle", "Inner", "Outer",
+  ]
+)
+```
+
+```elixir
+mask = circle_radius
+  |> Nx.less_equal(23)
+  |> Nx.reshape({1, 64,64, 1})
+
+[
+  # Rings
+  circle_radius |> Nx.multiply(0.5) |> Nx.sin,
+  # Squashed Rings
+  circle_radius |> Nx.pow(0.3) |> Nx.multiply(10) |> Nx.sin(),
+
+  # Animated Rings
+  5..60//3 
+  |> Enum.map(&Nx.sin(Nx.multiply(Nx.pow(circle_radius, 2/&1), 2*&1))) 
+  |> Nx.concatenate(axis: 0),
+
+  # Sinc = (sin(x)/x)
+  circle_radius|> Nx.sin() |> Nx.divide(circle_radius) |> then(&Nx.select(Nx.is_nan(&1), 1, &1)),
+
+  # Spiral Swirl
+  1..40//2 
+  |> Enum.map(fn a ->
+    circle_radius 
+    |> Nx.pow(0.3) 
+    |> Nx.multiply(10) 
+    |> Nx.add(circle_angle) 
+    |> Nx.subtract(a/3) 
+    |> Nx.sin()
+  end) |> Nx.concatenate(axis: 0),
+
+  # 2D Fourier Transform of Spiral Swirl
+  circle_radius |> Nx.pow(0.3) |> Nx.multiply(10) |> Nx.add(circle_angle) |> Nx.sin()
+  |> Nx.reshape({1, 1, 64,64}) |> Nx.fft2() |> Nx.reshape({1, 64,64, 1}) 
+  |> Nx.abs() |> Nx.log(),
+
+]
+|> KinoZoetrope.TensorStack.new(
+  titel: "Colorful Funny stuff",
+  labels: [
+    "Rings","Squashed Rings", "Animated Rings", 
+    "Sinc", "Spiral", "Spiral Fourier Transform"
+  ],
+  cmaps: [
+    nil,"viridis","rainbow", 
+    "jet","spring","CMRmap"
+  ]
 )
 ```
 
@@ -250,9 +350,9 @@ Enum.zip(
   end
 )
 |> Nx.concatenate(axis: 0)
-|> Nx.less_equal(10)
+|> Nx.less(10)
 |> KinoZoetrope.TensorStack.new(
-  titel: "Animated Mask",
+  titel: "Animated Circular Mask",
   cmap: "viridis"
 )
 ```
@@ -264,18 +364,20 @@ Enum.zip(
     1..90 |> Enum.map(&:math.sin(&1/17.0+c)*20), 
     1..90 |> Enum.map(&:math.cos(c*&1/13.0+c)*17)
   )
-  |> Enum.map(&Nx.add(
+  |> Enum.map(fn 
+    {x,y} -> Nx.add(
       Nx.iota({1,diam,1})
-      |> Nx.broadcast({diam,diam,1})
-      |> Nx.subtract(rad+ elem(&1, 0))
-      |> Nx.pow(2), 
+        |> Nx.broadcast({diam, diam, 1})
+        |> Nx.subtract(rad - x)
+        |> Nx.pow(2), 
+    
       Nx.iota({diam, 1,1})
-      |> Nx.broadcast({diam,diam,1})
-      |> Nx.subtract(rad+elem(&1, 1))
-      |> Nx.pow(2)
-  )
-  |> Nx.reshape({1, diam,diam, 1})
-  )
+        |> Nx.broadcast({diam, diam, 1})
+        |> Nx.subtract(rad - y)
+        |> Nx.pow(2)
+    )
+    |> Nx.reshape({1, diam,diam, 1})
+  end)
   |> Nx.concatenate(axis: 0)  
   |> Nx.sqrt()
 end)
@@ -290,16 +392,19 @@ end)
 ```
 
 ```elixir
-Nx.multiply(mask, colormix)
+[
+  colormix, Nx.multiply(mask, colormix)
+]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Gradient cut with circular mask"
+  titel: "Gradient cut with circular mask",
+  labels: ["Color mix", "Masked Color Mix"]
 )
 ```
 
 ```elixir
 size = 64
 
-gauss = Nx.add(
+gaussian = Nx.add(
   Nx.broadcast(0, {size,size,1})
     |> Nx.add(Nx.iota({1,size,1}))
     |> Nx.reshape({1, size,size})
@@ -315,37 +420,54 @@ gauss = Nx.add(
 |> Nx.negate()
 |> Nx.exp()
 
-gauss
+gaussian
 |> KinoZoetrope.TensorStack.new(
   titel: "Gaußian Mask / Filter of size #{size}x#{size}"
 )
 ```
 
 ```elixir
+rgba_color_mask = Nx.stack([
+    gaussian,
+    gaussian,
+    gaussian,
+    Nx.broadcast(1.0, Nx.shape(gaussian))
+ ],axis: 3) 
+
+rgba_blue_mask = Nx.stack([
+    Nx.broadcast(1.0, Nx.shape(gaussian)),
+    Nx.broadcast(1.0, Nx.shape(gaussian)),
+    gaussian,
+    Nx.broadcast(1.0, Nx.shape(gaussian))
+],axis: 3) 
+
+rgba_alpha_mask = Nx.stack([
+    Nx.broadcast(1.0, Nx.shape(gaussian)),
+    Nx.broadcast(1.0, Nx.shape(gaussian)),
+    Nx.broadcast(1.0, Nx.shape(gaussian)),
+    gaussian,
+ ],axis: 3) 
+
 [
-  Nx.stack([
-    gauss,
-    gauss,
-    gauss,
-    Nx.broadcast(1.0, {1, 64, 64})
-  ],axis: 3) 
+  rgba_color_mask
   |> Nx.pow(0.4)
   |> Nx.multiply(colormix)
   |> Nx.multiply(1.5)
   |> Nx.min(255),
 
-  Nx.stack([
-    Nx.broadcast(1.0, {1, 64, 64}),
-    Nx.broadcast(1.0, {1, 64, 64}),
-    gauss,
-    Nx.broadcast(1.0, {1, 64, 64})
-  ],axis: 3) 
+  rgba_blue_mask
   |> Nx.multiply(colormix)
+  |> Nx.min(255),
+  
+  rgba_alpha_mask
+  |> Nx.pow(0.4)
+  |> Nx.multiply(colormix)
+  |> Nx.multiply(1.5)
   |> Nx.min(255),
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Color gradient multiplied with gaussien mask",
-  labels: ["All channels multiplied", "Only blue channel masked out"]
+  labels: ["Color channels multiplied", "Only blue channel masked out", "Alpha Channel Masked out"]
 )
 ```
 
@@ -357,14 +479,14 @@ girl_col = bin
   |> Nx.from_binary(:u8) 
   |> Nx.reshape({1, 64, 64, 4}) 
 
-girl_bw = bin |> Nx.from_binary(:u8) 
-|> Nx.reshape({64, 64, 4}) 
-# Discard alpha Channel
-|> Nx.slice_along_axis(0, 3, axis: 2)
-# average color channels
-|> Nx.mean(axes: [2])
-|> Nx.as_type(:u8)
-|> Nx.reshape({64, 64, 1})
+girl_bw = girl_col
+  |> Nx.reshape({64, 64, 4}) 
+  # Discard alpha channel
+  |> Nx.slice_along_axis(0, 3, axis: 2)
+  # average color channels
+  |> Nx.mean(axes: [2])
+  |> Nx.as_type(:u8)
+  |> Nx.reshape({64, 64, 1})
 
 [
   girl_col, 
@@ -374,6 +496,51 @@ girl_bw = bin |> Nx.from_binary(:u8)
 |> KinoZoetrope.TensorStack.new(
   titel: "Image read from the file system",
   labels: ["RGBA Image", "Single Channel (Slider)", "Grayscale (mean)"]
+)
+```
+
+```elixir
+{:ok, img} = Image.open(Kino.FS.file_path("hex.png"))
+{:ok, bin} = Vix.Vips.Image.write_to_binary(img)
+
+hex_col = bin 
+  |> Nx.from_binary(:u8) 
+  |> Nx.reshape({1, :auto, 98, 4}) 
+
+hex_alpha = hex_col |> Nx.reshape({1, :auto, 98, 4}) |> Nx.slice_along_axis(3, 1, axis: 3)
+
+hex_bw = hex_col
+  |> Nx.reshape({:auto, 98, 4}) 
+  # Discard alpha channel
+  |> Nx.take(Nx.tensor([0,1,2]), axis: 2)
+  # or |> Nx.slice_along_axis(0, 3, axis: 2)
+  # average color channels
+  |> Nx.mean(axes: [2])
+  |> Nx.as_type(:u8)
+  |> Nx.reshape({1, :auto, 98, 1})
+
+# stich alpha channel back to r==g==b channels
+hex_bw_alpha = [hex_bw, hex_bw, hex_bw, hex_alpha] 
+  |> Nx.concatenate(axis: 3) 
+
+[
+  hex_col, 
+  hex_col |> Nx.take(Nx.tensor([1,2,0,3]), axis: 3),
+  hex_col |> Nx.transpose(axes: [3,1,2,0]), 
+  hex_alpha,
+  hex_bw,
+  hex_bw_alpha
+] 
+|> KinoZoetrope.TensorStack.new(
+  titel: "Elixir Hex Logo",
+  labels: [
+    "RGBA Image", 
+    "Swapped Channels",
+    "Single Color Channel (Slider)", 
+    "Alpha", 
+    "Grayscale (mean)", 
+    "Grayscale with Alpha"
+  ]
 )
 ```
 
