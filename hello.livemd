@@ -7,6 +7,8 @@ Mix.install([
   {:nx, "~> 0.10.0"},
   {:kino, "~> 0.18.0"},
   {:image, "~> 0.62.1"},
+  {:kino_vega_lite, "~> 0.1.9"},
+  {:tucan, "~> 0.5.1"},
   {:kino_zoetrope, "~> 0.12.0"}
 ])
 
@@ -257,6 +259,22 @@ circle2_angle = Nx.atan2(dy2, dx2)
 ```
 
 ```elixir
+alias VegaLite, as: Vl
+
+radius_slice =  circle_radius
+  |> Nx.slice([0, 32, 0, 0], [1, 1, 64, 1]) 
+  |> Nx.to_flat_list() 
+  |> Enum.with_index()
+  |> Enum.map(fn {v,i} -> %{x: i, y: v} end )
+
+Vl.new(width: 600, height: 400)
+|> Vl.data_from_values(radius_slice)
+|> Vl.mark(:line, color: :teal)
+|> Vl.encode(:x, field: :x, type: :quantitative)
+|> Vl.encode(:y, field: :y, type: :quantitative)
+```
+
+```elixir
 mask = circle_radius
   # threshold radius
   |> Nx.less_equal(23)
@@ -437,6 +455,22 @@ gaussian
 ```
 
 ```elixir
+alias VegaLite, as: Vl
+
+gaussian_slice =  gaussian
+  |> Nx.slice([32, 0, 0], [1, 64, 1]) 
+  |> Nx.to_flat_list() 
+  |> Enum.with_index()
+  |> Enum.map(fn {v,i} -> %{x: i, y: v} end )
+
+Vl.new(width: 600, height: 400, title: "1D Slice of 2D Gaußian")
+|> Vl.data_from_values(gaussian_slice)
+|> Vl.mark(:line, color: :teal)
+|> Vl.encode(:x, field: :x, type: :quantitative)
+|> Vl.encode(:y, field: :y, type: :quantitative)
+```
+
+```elixir
 rgba_color_mask = Nx.stack([
     gaussian,
     gaussian,
@@ -607,6 +641,67 @@ end
     "Result Single Channel (slider)"
   ]
 )
+```
+
+```elixir
+alias VegaLite, as: Vl
+
+girl_slice =  girl_col
+  |> Nx.reshape({64,64,4})
+  |> Nx.slice([32, 0, 0], [1, 64, 4]) 
+  |> Nx.reshape({64,4})
+  |> Nx.to_list() 
+  |> Enum.with_index() 
+  |> Enum.flat_map(fn {vs, x} ->
+    vs |> Enum.with_index() |> Enum.map(fn {v,c} -> 
+       %{x: x, y: v, channel: c}
+    end)
+  end)
+
+
+Vl.new(width: 600, height: 400, title: "Slices across RGBA image")
+|> Vl.data_from_values(girl_slice)
+|> Vl.mark(:line, color: :teal)
+|> Vl.encode(:x, field: :x, type: :quantitative)
+|> Vl.encode(:y, field: :y, type: :quantitative)
+|> Vl.encode(:color, field: :channel, type: :nominal)
+
+# |> Vl.mark(:bar, color: :teal)
+# |> Vl.encode(:x, field: :x, type: :nominal)
+# |> Vl.encode(:x_offset, field: :channel)  
+```
+
+```elixir
+alias VegaLite, as: Vl
+
+girl_col_blurred = for b <- [5,10,15] do 
+  {
+    b,
+    girl_col
+    |> Nx.transpose(axes: [0,3,1,2])
+    |> Nx.conv(make_gauss.(b), padding: :same, feature_group_size: 4)
+    |> Nx.transpose(axes: [0,2,3,1])
+  }
+end
+
+girl_slice =  girl_col
+  |> Nx.slice([0, 32, 0, 0], [1, 1, 64, 1]) 
+  |> Nx.to_flat_list() 
+  |> Enum.with_index()
+  |> Enum.map(fn {v,i} -> %{x: i, y: v, blur: 0} end)
+
+girl_blurred_slice =  girl_col_blurred |> Enum.flat_map(
+  &Nx.slice(elem(&1, 1), [0, 32, 0, 0], [1, 1, 64, 1]) 
+  |> Nx.to_flat_list() 
+  |> Enum.with_index()
+  |> Enum.map(fn {v,i} -> %{x: i, y: v, blur: elem(&1, 0)} end))
+
+Vl.new(width: 600, height: 400, title: "Slices of various blur intensities")
+|> Vl.data_from_values(girl_slice ++ girl_blurred_slice)
+|> Vl.mark(:line, color: :teal)
+|> Vl.encode(:x, field: :x, type: :quantitative)
+|> Vl.encode(:y, field: :y, type: :quantitative)
+|> Vl.encode(:color, field: :blur, type: :nominal)
 ```
 
 ```elixir
