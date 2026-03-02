@@ -704,6 +704,8 @@ Vl.new(width: 600, height: 400, title: "Slices of various blur intensities")
 |> Vl.encode(:color, field: :blur, type: :nominal)
 ```
 
+## Sobel Edge Detection
+
 ```elixir
 make_sobel = fn orientation -> 
   Nx.tensor([
@@ -744,6 +746,8 @@ end
 )
 ```
 
+## Edge Orientation
+
 ```elixir
 make_gauss = fn size -> 
   Nx.add( 
@@ -763,7 +767,7 @@ make_gauss = fn size ->
   |> Nx.exp() 
   |> then(&Nx.divide(&1, Nx.sum(&1)))
   |> Nx.reshape({1,1,size,size})
-  |> Nx.broadcast({4, 1,size,size})
+  |> then(&Nx.concatenate([&1,&1,&1,Nx.broadcast(0, {1,1,size,size})], axis: 0))
 end
 
 make_sobel = fn orientation -> 
@@ -787,7 +791,7 @@ end
 soft_girl_col = 
   girl_col
   |> Nx.transpose(axes: [0,3,1,2])
-  |> Nx.conv(make_gauss.(3), padding: :same, feature_group_size: 4)
+  |> Nx.conv(make_gauss.(6), padding: :same, feature_group_size: 4)
   |> Nx.transpose(axes: [0,2,3,1])
 
 
@@ -803,17 +807,18 @@ horts = soft_girl_col
   |> Nx.conv(make_sobel.(:horizontal), padding: :same, feature_group_size: 4)
   |> Nx.transpose(axes: [1,2,3,0])
 
-orient = Nx.atan2(verts, horts)
+girl_edge_mag = hypot.(verts, horts) 
+girl_edge_orient = Nx.atan2(verts, horts)
 
 [
   soft_girl_col |> Nx.transpose(axes: [3,1,2,0]),
   verts,
   horts,
-  orient,
-  orient,
-  hypot.(verts, horts) 
+  girl_edge_orient,
+  girl_edge_orient,
+  girl_edge_mag 
   |> Nx.greater_equal(0.5)
-  |> Nx.multiply(orient)
+  |> Nx.multiply(girl_edge_orient),
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Edge Orientation",
@@ -822,6 +827,50 @@ orient = Nx.atan2(verts, horts)
     "Edge Orientation", "Edge Orientation", "masked orientation", 
   ],
   cmaps: [nil, "viridis", "viridis", "gray", "hsv", "hsv"]
+)
+```
+
+## Canny Edge Detection
+
+```elixir
+{channels, size, size, _} = Nx.shape(girl_edge_orient)
+step = :math.pi / 4
+orient_quant = girl_edge_orient |> Nx.divide(step) |> Nx.round() |> Nx.multiply(step)
+orient_x = Nx.sin(orient_quant) |> Nx.round() |> Nx.as_type({:s, 32}) 
+orient_y = Nx.cos(orient_quant) |> Nx.round() |> Nx.as_type({:s, 32})
+
+x_right = Nx.iota({1, size, 1}) |> Nx.add(orient_x) |> Nx.add(size) |> Nx.remainder(size)
+y_left = Nx.iota({1, size, 1}) |> Nx.subtract(orient_x) |> Nx.add(size) |> Nx.remainder(size)
+
+y_up   = Nx.iota({size, 1, 1}) |> Nx.add(orient_y) |> Nx.add(size) |> Nx.remainder(size)
+y_down = Nx.iota({size, 1, 1}) |> Nx.subtract(orient_y) |> Nx.add(size) |> Nx.remainder(size)
+
+xy1 = y_up   |> Nx.multiply(size) |> Nx.add(x_right) |> Nx.add(Nx.iota({channels,1,1,1}) |> Nx.multiply(size*size))
+xy2 = y_down |> Nx.multiply(size) |> Nx.add(y_left) |> Nx.add(Nx.iota({channels,1,1,1}) |> Nx.multiply(size*size))
+
+edge_mag_side_a = girl_edge_mag |> Nx.reshape({:auto}) |> Nx.take(xy1) |> Nx.reshape({channels,size,size,1})
+edge_mag_side_b = girl_edge_mag |> Nx.reshape({:auto}) |> Nx.take(xy2) |> Nx.reshape({channels,size,size,1})
+
+non_max_suppressed = Nx.greater(girl_edge_mag, 0.2)
+ |> Nx.logical_and(Nx.greater(girl_edge_mag, edge_mag_side_a)) 
+ |> Nx.logical_and(Nx.greater(girl_edge_mag, edge_mag_side_b))
+
+[
+  soft_girl_col |> Nx.transpose(axes: [3,1,2,0]),
+  girl_edge_mag,
+  orient_quant,
+  orient_x,
+  orient_y,
+  non_max_suppressed,
+]
+|> KinoZoetrope.TensorStack.new(
+  titel: "Edge Orientation",
+  labels: [
+    "Single Channel (slider)", "Edge Magnitude", "Quanzied Orientation", "Orient X", 
+    "Orient Y",
+    "Thin Edges (Canny)"
+  ],
+  cmaps: [nil, nil, "viridis", "rainbow", "rainbow", nil]
 )
 ```
 
