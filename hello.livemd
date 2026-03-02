@@ -9,7 +9,7 @@ Mix.install([
   {:image, "~> 0.62.1"},
   {:kino_vega_lite, "~> 0.1.9"},
   {:tucan, "~> 0.5.1"},
-  {:kino_zoetrope, "~> 0.12.0"}
+  {:kino_zoetrope, "~> 0.13.0"}
 ])
 
 Kino.nothing()
@@ -236,25 +236,28 @@ diam = 2*rad
 dx = Nx.iota({1,diam,1})
   |> Nx.broadcast({diam,diam,1})
   |> Nx.subtract(rad)
+  |> Nx.divide(rad)
 dx2 = dx|> Nx.pow(2)
 
 dy = Nx.iota({diam,1,1})
   |> Nx.broadcast({diam,diam,1})
   |> Nx.subtract(rad)
+  |> Nx.divide(rad)
 dy2 = dy |> Nx.pow(2)
 
-circle_radius = Nx.add(dx2, dy2) |> Nx.sqrt() 
+circle_radius2 = Nx.add(dx2, dy2)
+circle_radius = circle_radius2 |> Nx.sqrt() 
   |> Nx.reshape({1, diam,diam, 1})
 
 
 circle_angle = Nx.atan2(dy, dx)
 circle2_angle = Nx.atan2(dy2, dx2)
 
-[dx2, dy2, circle_radius, circle_angle, circle2_angle]
+[dx2, dy2, circle_radius, circle_angle, circle2_angle, circle_radius2]
 |> KinoZoetrope.TensorStack.new(
   titel: "Circular masked generated via thresholding",
   labels: ["Distance y²", "Distance y²", "Radius","Angle", "Angle Squared"],
-  cmaps: [nil,nil,nil,"hsv","rainbow"]
+  cmaps: [nil,nil,nil,"hsv","hsv"]
 )
 ```
 
@@ -302,10 +305,12 @@ mask = circle_radius
   |> Nx.reshape({1, 64,64, 1})
 
 [
+  # Ring
+  Nx.logical_and(Nx.greater(circle_radius, 0.4), Nx.less(circle_radius, 0.6)),
   # Rings
-  circle_radius |> Nx.multiply(0.5) |> Nx.sin,
+  circle_radius |> Nx.multiply(16) |> Nx.sin,
   # Squashed Rings
-  circle_radius |> Nx.pow(0.3) |> Nx.multiply(10) |> Nx.sin(),
+  circle_radius |> Nx.multiply(16) |> Nx.pow(0.3) |> Nx.multiply(10) |> Nx.sin(),
 
   # Animated Rings
   5..60//3 
@@ -313,12 +318,13 @@ mask = circle_radius
   |> Nx.concatenate(axis: 0),
 
   # Sinc = (sin(x)/x)
-  circle_radius|> Nx.sin() |> Nx.divide(circle_radius) |> then(&Nx.select(Nx.is_nan(&1), 1, &1)),
+  circle_radius |> Nx.multiply(16) |> Nx.sin() |> Nx.divide(circle_radius) |> then(&Nx.select(Nx.is_nan(&1), 1, &1)),
 
   # Spiral 
   1..40//2 
   |> Enum.map(fn a ->
     circle_radius 
+    |> Nx.multiply(16)
     |> Nx.pow(0.3) 
     |> Nx.multiply(10) 
     |> Nx.add(circle_angle) 
@@ -335,21 +341,23 @@ mask = circle_radius
   1..20
   |> Enum.map(fn a ->
     circle_radius
+    |> Nx.multiply(16)
     |> Nx.pow(0.25) 
-    |> Nx.multiply(a * 0.8)
+    |> Nx.subtract(:math.pi - 0.1)
+    |> Nx.multiply(a)
     |> Nx.add(circle_angle)  
-    |> Nx.subtract((:math.pi - 0.1) * a)
     |> Nx.sin()
   end) |> Nx.concatenate(axis: 0),
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Colorful Funny stuff",
   labels: [
+    "Ring",
     "Rings","Squashed Rings", "Animated Rings", 
-    "Sinc", "Spiral", "Spiral Fourier Transform", "Swirl"
+    "Sinc", "Spiral", "Spiral Fourier Transform", "Animated Swirl"
   ],
   cmaps: [
-    nil,"viridis","rainbow", 
+    nil, nil,"viridis","rainbow", 
     "jet","managua","CMRmap", "plasma"
   ]
 )
@@ -739,8 +747,8 @@ end
 |> KinoZoetrope.TensorStack.new(
   titel: "Edge Detection via Sobel Filter",
   labels: [
-    "Single Channel (slider)", "horizontal filter", "horizontal result", 
-    "Single Channel (slider)", "vertical filter", "vertical result", 
+    "Single Channel (slider)", "Vertical filter", "Vertical Edges", 
+    "Single Channel (slider)", "Horizontal filter", "Horizontal Edges", 
   ],
   cmap: "viridis"
 )
@@ -817,7 +825,7 @@ girl_edge_orient = Nx.atan2(verts, horts)
   girl_edge_orient,
   girl_edge_orient,
   girl_edge_mag 
-  |> Nx.greater_equal(0.5)
+  |> Nx.greater_equal(0.1)
   |> Nx.multiply(girl_edge_orient),
 ]
 |> KinoZoetrope.TensorStack.new(
@@ -862,15 +870,19 @@ non_max_suppressed = Nx.greater(girl_edge_mag, 0.2)
   orient_x,
   orient_y,
   non_max_suppressed,
+  non_max_suppressed |> Nx.multiply(girl_edge_orient),
+  non_max_suppressed |> Nx.multiply(girl_edge_mag) |> Nx.mean(axes: [0])
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Edge Orientation",
   labels: [
     "Single Channel (slider)", "Edge Magnitude", "Quanzied Orientation", "Orient X", 
     "Orient Y",
-    "Thin Edges (Canny)"
+    "Thin Edges (Canny)",
+    "Thin Edge Orientation",
+    "Thin Edge Intensity"
   ],
-  cmaps: [nil, nil, "viridis", "rainbow", "rainbow", nil]
+  cmaps: [nil, nil, "viridis", "managua", "managua", nil, "hsv", nil]
 )
 ```
 
