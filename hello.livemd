@@ -1244,3 +1244,146 @@ results
   cmap: "viridis"
 )
 ```
+
+## Bilinear Sampling
+
+```elixir
+x = Nx.iota({1,64,1}) |> Nx.broadcast({64,64,1})
+y = Nx.iota({64,1,1}) |> Nx.broadcast({64,64,1})
+
+eye_x = 25
+eye_y = 30
+
+effects = [:scaledup, :scaleddown, :shifted, :rot45, :rot90, :swirl, :warpscale, :fish]
+
+results = for m <- effects do
+
+  {mapped_x, mapped_y} = case m do
+  :shifted -> 
+    {
+      x |> Nx.multiply(1) |> Nx.add(32), 
+      y |> Nx.multiply(1) |> Nx.add(32)
+    }
+  :scaleddown -> 
+    {
+      x |> Nx.subtract(32) |> Nx.multiply(1.8) |> Nx.add(32), 
+      y |> Nx.subtract(32) |> Nx.multiply(1.8) |> Nx.add(32)
+    }
+  :scaledup -> 
+    {
+      x |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32), 
+      y |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32)
+    }
+  :warpscale -> 
+    {
+      x |> Nx.subtract(32) |> Nx.abs() |> Nx.multiply(1/4.0) |> Nx.pow(1/0.6) |> Nx.multiply(x |> Nx.subtract(32) |> Nx.sign()) |> Nx.add(32), 
+      y |> Nx.subtract(32) |> Nx.abs() |> Nx.multiply(1/4.0) |> Nx.pow(1/0.6) |> Nx.multiply(y |> Nx.subtract(32) |> Nx.sign())  |> Nx.add(32)
+    }
+  :rot45 -> 
+    {
+      x |> Nx.subtract(eye_x) |> Nx.multiply(+1) |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1)) |> Nx.multiply(:math.sqrt(2)/2) |> Nx.add(eye_x),
+      y |> Nx.subtract(eye_y) |> Nx.multiply(+1) |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1)) |> Nx.multiply(:math.sqrt(2)/2) |> Nx.add(eye_y)
+    }
+  :rot90-> 
+    {
+      x |> Nx.subtract(eye_x) |> Nx.multiply(0) |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1)) |> Nx.add(eye_x),
+      y |> Nx.subtract(eye_y) |> Nx.multiply(0) |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1)) |> Nx.add(eye_y)
+    }
+  :swirl -> 
+      size = 64
+      center = (size - 1) / 2
+    
+      u = x |> Nx.subtract(center)
+      v = y |> Nx.subtract(center)
+      r2 = Nx.add(Nx.multiply(u, u), Nx.multiply(v, v))
+      theta = Nx.atan2(v, u)
+      
+      k = -0.0015  # twist strength
+      
+      theta_src = theta |> Nx.subtract(Nx.multiply(k, r2))
+
+      {
+        center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.cos(theta_src))),
+        center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.sin(theta_src)))
+      }
+  :fish -> 
+      size = 64
+      center = (size - 1) / 2
+    
+      u = x |> Nx.subtract(center)
+      v = y |> Nx.subtract(center)
+      r = Nx.sqrt(Nx.add(Nx.multiply(u, u), Nx.multiply(v, v)))
+      theta = Nx.atan2(v, u)
+            
+      r_source =Nx.pow(r, 1.8) |> Nx.multiply(0.1)
+
+      {
+        center |> Nx.add(Nx.multiply(r_source, Nx.cos(theta))),
+        center |> Nx.add(Nx.multiply(r_source, Nx.sin(theta)))
+      }
+
+    _ -> {x,y}
+
+end
+
+
+  x_floored = mapped_x |> Nx.floor() |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64) |> Nx.remainder(64)
+  y_floored = mapped_y |> Nx.floor() |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64) |> Nx.remainder(64)
+  x_ceiled  = mapped_x |> Nx.ceil()  |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64) |> Nx.remainder(64)
+  y_ceiled  = mapped_y |> Nx.ceil()  |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64) |> Nx.remainder(64)
+
+  x_frac = mapped_x |> Nx.as_type({:f, 32}) |> Nx.subtract(Nx.floor(mapped_x)) 
+  y_frac = mapped_y |> Nx.as_type({:f, 32}) |> Nx.subtract(Nx.floor(mapped_y))
+  
+  xy00 = y_floored |> Nx.multiply(64) |> Nx.add(x_floored)
+  xy10 = y_floored |> Nx.multiply(64) |> Nx.add(x_ceiled)
+  xy01 = y_ceiled  |> Nx.multiply(64) |> Nx.add(x_floored)
+  xy11 = y_ceiled  |> Nx.multiply(64) |> Nx.add(x_ceiled)
+
+  
+  girl_mapped_00 = girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy00) |> Nx.reshape({64,64,1})
+  girl_mapped_10 = girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy10) |> Nx.reshape({64,64,1})
+  girl_mapped_01 = girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy01) |> Nx.reshape({64,64,1})
+  girl_mapped_11 = girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy11) |> Nx.reshape({64,64,1})
+
+  girl_mapped_y0 =  Nx.add(
+    Nx.multiply(girl_mapped_01, y_frac),
+    Nx.multiply(girl_mapped_00, Nx.subtract(1, y_frac))
+  )
+  
+  girl_mapped_y1 =  Nx.add(
+    Nx.multiply(girl_mapped_11, y_frac),
+    Nx.multiply(girl_mapped_10, Nx.subtract(1, y_frac))
+  )
+  
+  girl_mapped = Nx.add(
+    Nx.multiply(girl_mapped_y1, x_frac),
+    Nx.multiply(girl_mapped_y0, Nx.subtract(1, x_frac))
+  ) 
+
+  coord_mapped_x =  Nx.add(
+    Nx.multiply(x_ceiled, x_frac),
+    Nx.multiply(x_floored, Nx.subtract(1, x_frac))
+  )
+  
+  coord_mapped_y =  Nx.add(
+    Nx.multiply(y_ceiled, y_frac),
+    Nx.multiply(y_floored, Nx.subtract(1, y_frac))
+  )
+
+  Nx.concatenate([
+    girl_mapped, 
+    coord_mapped_x |> Nx.multiply(4), 
+    coord_mapped_y |> Nx.multiply(4), 
+    Nx.broadcast(255, {64,64,1}), 
+  ], axis: 2) |> Nx.reshape({1,64,64,4})
+end 
+
+
+[girl_bw|results]
+|> KinoZoetrope.TensorStack.new(
+  titel: "Green: X, Blue: Y, Red: Source", 
+  labels: ["original"| (for m <- effects, do: "#{m}")],
+  cmap: "viridis"
+)
+```
