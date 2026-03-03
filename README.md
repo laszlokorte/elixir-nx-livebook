@@ -5,4 +5,6 @@
 ![Screenshot](./screenshots/blur.png)
 ![Screenshot](./screenshots/edges-sobel.png)
 ![Screenshot](./screenshots/edges-orientation.png)
+![Screenshot](./screenshots/edges-canny.png)
 ![Screenshot](./screenshots/gol.png)
+![Screenshot](./screenshots/geometric-transforms.png)

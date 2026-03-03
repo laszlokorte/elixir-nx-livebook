@@ -280,7 +280,7 @@ Vl.new(width: 600, height: 400)
 ```elixir
 mask = circle_radius
   # threshold radius
-  |> Nx.less_equal(23)
+  |> Nx.less_equal(0.5)
   |> Nx.reshape({1, 64,64, 1})
 
 [
@@ -300,10 +300,6 @@ mask = circle_radius
 ```
 
 ```elixir
-mask = circle_radius
-  |> Nx.less_equal(23)
-  |> Nx.reshape({1, 64,64, 1})
-
 [
   # Ring
   Nx.logical_and(Nx.greater(circle_radius, 0.4), Nx.less(circle_radius, 0.6)),
@@ -1042,5 +1038,209 @@ Stream.iterate(world, do_step)
 |> KinoZoetrope.TensorStack.new(
   titel: "Game of Life",
   labels: ["World (Inverted)"]
+)
+```
+
+## Geometric Transforms
+
+```elixir
+x = Nx.iota({1,64,1}) |> Nx.broadcast({64,64,1})
+y = Nx.iota({64,1,1}) |> Nx.broadcast({64,64,1})
+
+eye_x = 25
+eye_y = 30
+
+effects = [:scaledup, :scaleddown, :shifted, :rot45, :rot90, :swirl, :warpscale, :fish]
+
+results = for m <- effects do
+
+  {mapped_x, mapped_y} = case m do
+  :shifted -> 
+    {
+      x |> Nx.multiply(1) |> Nx.add(32), 
+      y |> Nx.multiply(1) |> Nx.add(32)
+    }
+  :scaleddown -> 
+    {
+      x |> Nx.subtract(32) |> Nx.multiply(2) |> Nx.add(32), 
+      y |> Nx.subtract(32) |> Nx.multiply(2) |> Nx.add(32)
+    }
+  :scaledup -> 
+    {
+      x |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32), 
+      y |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32)
+    }
+  :warpscale -> 
+    {
+      x |> Nx.subtract(32) |> Nx.abs() |> Nx.multiply(1/4.0) |> Nx.pow(1/0.6) |> Nx.multiply(x |> Nx.subtract(32) |> Nx.sign()) |> Nx.add(32), 
+      y |> Nx.subtract(32) |> Nx.abs() |> Nx.multiply(1/4.0) |> Nx.pow(1/0.6) |> Nx.multiply(y |> Nx.subtract(32) |> Nx.sign())  |> Nx.add(32)
+    }
+  :rot45 -> 
+    {
+      x |> Nx.subtract(eye_x) |> Nx.multiply(+1) |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1)) |> Nx.multiply(:math.sqrt(2)/2) |> Nx.add(eye_x),
+      y |> Nx.subtract(eye_y) |> Nx.multiply(+1) |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1)) |> Nx.multiply(:math.sqrt(2)/2) |> Nx.add(eye_y)
+    }
+  :rot90-> 
+    {
+      x |> Nx.subtract(eye_x) |> Nx.multiply(0) |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1)) |> Nx.add(eye_x),
+      y |> Nx.subtract(eye_y) |> Nx.multiply(0) |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1)) |> Nx.add(eye_y)
+    }
+  :swirl -> 
+      size = 64
+      center = (size - 1) / 2
+    
+      u = x |> Nx.subtract(center)
+      v = y |> Nx.subtract(center)
+      r2 = Nx.add(Nx.multiply(u, u), Nx.multiply(v, v))
+      theta = Nx.atan2(v, u)
+      
+      k = -0.0015  # twist strength
+      
+      theta_src = theta |> Nx.subtract(Nx.multiply(k, r2))
+
+      {
+        center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.cos(theta_src))),
+        center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.sin(theta_src)))
+      }
+  :fish -> 
+      size = 64
+      center = (size - 1) / 2
+    
+      u = x |> Nx.subtract(center)
+      v = y |> Nx.subtract(center)
+      r = Nx.sqrt(Nx.add(Nx.multiply(u, u), Nx.multiply(v, v)))
+      theta = Nx.atan2(v, u)
+            
+      r_source =Nx.pow(r, 1.8) |> Nx.multiply(0.1)
+
+      {
+        center |> Nx.add(Nx.multiply(r_source, Nx.cos(theta))),
+        center |> Nx.add(Nx.multiply(r_source, Nx.sin(theta)))
+      }
+
+    _ -> {x,y}
+
+end
+
+
+  x_repaired = mapped_x |> Nx.round() |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64)  |> Nx.remainder(64)
+  y_repaired = mapped_y |> Nx.round() |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64)  |> Nx.remainder(64)
+  xy =  y_repaired |> Nx.multiply(64) |> Nx.add(x_repaired)
+  
+  girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy) |> Nx.reshape({64,64,1})
+
+end
+
+
+[girl_bw | results] 
+|> KinoZoetrope.TensorStack.new(
+  titel: "Here we girl again", 
+  labels: ["Original" | (for m <- effects, do: "Remapped: #{m}")],
+  cmap: "viridis"
+)
+```
+
+```elixir
+x = Nx.iota({1,64,1}) |> Nx.broadcast({64,64,1})
+y = Nx.iota({64,1,1}) |> Nx.broadcast({64,64,1})
+
+eye_x = 25
+eye_y = 30
+
+effects = [:scaledup, :scaleddown, :shifted, :rot45, :rot90, :swirl, :warpscale, :fish]
+
+results = for m <- effects do
+
+  {mapped_x, mapped_y} = case m do
+  :shifted -> 
+    {
+      x |> Nx.multiply(1) |> Nx.add(32), 
+      y |> Nx.multiply(1) |> Nx.add(32)
+    }
+  :scaleddown -> 
+    {
+      x |> Nx.subtract(32) |> Nx.multiply(2) |> Nx.add(32), 
+      y |> Nx.subtract(32) |> Nx.multiply(2) |> Nx.add(32)
+    }
+  :scaledup -> 
+    {
+      x |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32), 
+      y |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32)
+    }
+  :warpscale -> 
+    {
+      x |> Nx.subtract(32) |> Nx.abs() |> Nx.multiply(1/4.0) |> Nx.pow(1/0.6) |> Nx.multiply(x |> Nx.subtract(32) |> Nx.sign()) |> Nx.add(32), 
+      y |> Nx.subtract(32) |> Nx.abs() |> Nx.multiply(1/4.0) |> Nx.pow(1/0.6) |> Nx.multiply(y |> Nx.subtract(32) |> Nx.sign())  |> Nx.add(32)
+    }
+  :rot45 -> 
+    {
+      x |> Nx.subtract(eye_x) |> Nx.multiply(+1) |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1)) |> Nx.multiply(:math.sqrt(2)/2) |> Nx.add(eye_x),
+      y |> Nx.subtract(eye_y) |> Nx.multiply(+1) |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1)) |> Nx.multiply(:math.sqrt(2)/2) |> Nx.add(eye_y)
+    }
+  :rot90-> 
+    {
+      x |> Nx.subtract(eye_x) |> Nx.multiply(0) |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1)) |> Nx.add(eye_x),
+      y |> Nx.subtract(eye_y) |> Nx.multiply(0) |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1)) |> Nx.add(eye_y)
+    }
+  :swirl -> 
+      size = 64
+      center = (size - 1) / 2
+    
+      u = x |> Nx.subtract(center)
+      v = y |> Nx.subtract(center)
+      r2 = Nx.add(Nx.multiply(u, u), Nx.multiply(v, v))
+      theta = Nx.atan2(v, u)
+      
+      k = -0.0015  # twist strength
+      
+      theta_src = theta |> Nx.subtract(Nx.multiply(k, r2))
+
+      {
+        center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.cos(theta_src))),
+        center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.sin(theta_src)))
+      }
+  :fish -> 
+      size = 64
+      center = (size - 1) / 2
+    
+      u = x |> Nx.subtract(center)
+      v = y |> Nx.subtract(center)
+      r = Nx.sqrt(Nx.add(Nx.multiply(u, u), Nx.multiply(v, v)))
+      theta = Nx.atan2(v, u)
+            
+      r_source =Nx.pow(r, 1.8) |> Nx.multiply(0.1)
+
+      {
+        center |> Nx.add(Nx.multiply(r_source, Nx.cos(theta))),
+        center |> Nx.add(Nx.multiply(r_source, Nx.sin(theta)))
+      }
+
+    _ -> {x,y}
+
+end
+
+
+  x_repaired = mapped_x |> Nx.round() |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64)  |> Nx.remainder(64)
+  y_repaired = mapped_y |> Nx.round() |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64)  |> Nx.remainder(64)
+
+  xy =  y_repaired |> Nx.multiply(64) |> Nx.add(x_repaired)
+  
+  girl_mapped = girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy) |> Nx.reshape({64,64,1})
+
+  
+  Nx.concatenate([
+    girl_mapped, 
+    x_repaired |> Nx.multiply(4), 
+    y_repaired |> Nx.multiply(4), 
+    Nx.broadcast(255, {64,64,1}) |> Nx.multiply(1) |> Nx.subtract(Nx.multiply(0, girl_mapped)), 
+  ], axis: 2) |> Nx.reshape({1,64,64,4})
+end 
+
+
+results
+|> KinoZoetrope.TensorStack.new(
+  titel: "Green: X, Blue: Y, Red: Source", 
+  labels: (for m <- effects, do: "Remapped: #{m}"),
+  cmap: "viridis"
 )
 ```
