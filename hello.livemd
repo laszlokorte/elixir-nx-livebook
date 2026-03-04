@@ -35,59 +35,64 @@ Nx.tensor([1,2,3,4,5,6])
 ```
 
 ```elixir
-Nx.tensor([1,2,3,4,5,6])
+Nx.tensor([1, 2, 3, 4, 5, 6])
 |> Nx.reshape({3, 2})
-|> Nx.new_axis(-1) # new dimensions can be added
-|> Nx.shape() # ask the tensor for its shape
-```
-
-```elixir
-Nx.tensor([1,2,3,4,5,6], type: :f32)
+# new dimensions can be added
 |> Nx.new_axis(-1)
-|> Nx.size() # the total number of elements in the tensor
+# ask the tensor for its shape
+|> Nx.shape()
 ```
 
 ```elixir
-Nx.tensor([1,2,3,4,5,6])
+Nx.tensor([1, 2, 3, 4, 5, 6], type: :f32)
+|> Nx.new_axis(-1)
+# the total number of elements in the tensor
+|> Nx.size()
+```
+
+```elixir
+Nx.tensor([1, 2, 3, 4, 5, 6])
 |> Nx.reshape({3, :auto})
-|> Nx.new_axis(0) # dimensions can be added
-|> Nx.new_axis(2) # in different
-|> Nx.new_axis(0) # places
+# dimensions can be added
+|> Nx.new_axis(0)
+# in different
+|> Nx.new_axis(2)
+# places
+|> Nx.new_axis(0)
 # |> dbg
-|> Nx.shape
-
+|> Nx.shape()
 ```
 
 ```elixir
-Nx.tensor([1,2,3,4,5,6,7,8,9,10,11,12])
+Nx.tensor([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
 |> Nx.reshape({4, :auto, 1})
 # We can view 2d, 3d and 4d tensors as bitmap images
-|> KinoZoetrope.TensorStack.new(
-  titel: "A tensor plotted as 2D grayscale bitmap"
-)
+|> KinoZoetrope.TensorStack.new(titel: "A tensor plotted as 2D grayscale bitmap")
 ```
 
 ```elixir
 [
-  Nx.tensor([1,2,3,4,5,6,7,8,9,10,11,12]) |> Nx.reshape({4,3,1}),
-  Nx.tensor([1,2,3,4,5,6,7,8,9,10,11,12]) |> Nx.reshape({3,4,1}),
-  Nx.tensor([1,2,3,4,5,6,7,8,9,10,11,12]) |> Nx.reshape({6,2,1}),
-  
-  Nx.tensor([1,2,3,4,5,6,7,8,9,10,11,12]) 
-    |> Nx.reshape({4,3,1}) 
-    |> Nx.transpose(axes: [1,0,2]),
+  Nx.tensor([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) |> Nx.reshape({4, 3, 1}),
+  Nx.tensor([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) |> Nx.reshape({3, 4, 1}),
+  Nx.tensor([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) |> Nx.reshape({6, 2, 1}),
+  Nx.tensor([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+  |> Nx.reshape({4, 3, 1})
+  |> Nx.transpose(axes: [1, 0, 2])
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Some reshaped and transposed Tensors",
   labels: ["3x4", "4x3", "2x6 with colormap", "transposed with colormap"],
   cmaps: [
-    nil, nil, "rainbow", "viridis",
+    nil,
+    nil,
+    "rainbow",
+    "viridis"
   ]
 )
 ```
 
 ```elixir
-Nx.broadcast(255, {64,64,1})
+Nx.broadcast(255, {64, 64, 1})
 |> KinoZoetrope.TensorStack.new(
   titel: "64x64 from single value",
   vmin: 0,
@@ -96,19 +101,24 @@ Nx.broadcast(255, {64,64,1})
 ```
 
 ```elixir
-Nx.broadcast(128, {64, 64, 3})
-|> Nx.reshape({1, 64,64, 3})
-|> KinoZoetrope.TensorStack.new(
-  titel: "RGB image with all channels = 128 (gray)"
+Nx.logical_xor(
+  Nx.iota({1, 64, 1}) |> Nx.remainder(16) |> Nx.less(8),
+  Nx.iota({64, 1, 1}) |> Nx.remainder(16) |> Nx.less(8)
 )
+|> Nx.logical_not()
+|> KinoZoetrope.TensorStack.new(titel: "Chess board")
+```
+
+```elixir
+Nx.broadcast(128, {64, 64, 3})
+|> Nx.reshape({1, 64, 64, 3})
+|> KinoZoetrope.TensorStack.new(titel: "RGB image with all channels = 128 (gray)")
 ```
 
 ```elixir
 Nx.broadcast(200, {64, 64, 4})
-|> Nx.reshape({1, 64,64, 4})
-|> KinoZoetrope.TensorStack.new(
-  titel: "RGBA image with all channels = 200 (gray transparent)"
-)
+|> Nx.reshape({1, 64, 64, 4})
+|> KinoZoetrope.TensorStack.new(titel: "RGBA image with all channels = 200 (gray transparent)")
 ```
 
 ```elixir
@@ -118,7 +128,7 @@ Nx.stack([
   Nx.broadcast(20, {64, 64}),
   Nx.broadcast(50, {64, 64}),
   Nx.broadcast(30, {64, 64}),
-  Nx.broadcast(20, {64, 64}),
+  Nx.broadcast(20, {64, 64})
 ])
 |> KinoZoetrope.TensorStack.new(
   titel: "Multiple images stacked to an animation",
@@ -128,34 +138,96 @@ Nx.stack([
 
 ```elixir
 Nx.stack([
-  Nx.concatenate([
-    Nx.broadcast(150, {64, 64,1}),
-    Nx.broadcast(0, {64, 64,1}),
-    Nx.broadcast(0, {64, 64,1}),
-    Nx.broadcast(255, {64, 64,1}),
-  ], axis: 2),
-  Nx.concatenate([
-    Nx.broadcast(0, {64, 64,1}),
-    Nx.broadcast(150, {64, 64,1}),
-    Nx.broadcast(0, {64, 64,1}),
-    Nx.broadcast(255, {64, 64,1}),
-  ], axis: 2),
-  Nx.concatenate([
-    Nx.broadcast(0, {64, 64,1}),
-    Nx.broadcast(0, {64, 64,1}),
-    Nx.broadcast(150, {64, 64,1}),
-    Nx.broadcast(255, {64, 64,1}),
-  ], axis: 2)
+  Nx.concatenate(
+    [
+      Nx.broadcast(150, {64, 64, 1}),
+      Nx.broadcast(0, {64, 64, 1}),
+      Nx.broadcast(0, {64, 64, 1}),
+      Nx.broadcast(255, {64, 64, 1})
+    ],
+    axis: 2
+  ),
+  Nx.concatenate(
+    [
+      Nx.broadcast(0, {64, 64, 1}),
+      Nx.broadcast(150, {64, 64, 1}),
+      Nx.broadcast(0, {64, 64, 1}),
+      Nx.broadcast(255, {64, 64, 1})
+    ],
+    axis: 2
+  ),
+  Nx.concatenate(
+    [
+      Nx.broadcast(0, {64, 64, 1}),
+      Nx.broadcast(0, {64, 64, 1}),
+      Nx.broadcast(150, {64, 64, 1}),
+      Nx.broadcast(255, {64, 64, 1})
+    ],
+    axis: 2
+  )
 ])
+|> KinoZoetrope.TensorStack.new(titel: "Multiple RGBA images stacked")
+```
+
+```elixir
+[
+  Nx.concatenate(
+    [
+      Nx.logical_xor(
+        Nx.iota({1, 64, 1}) |> Nx.remainder(16) |> Nx.less(8),
+        Nx.iota({64, 1, 1}) |> Nx.remainder(16) |> Nx.less(8)
+      )
+      |> Nx.logical_not()
+      |> Nx.multiply(255),
+      Nx.logical_or(
+        Nx.iota({1, 64, 1}) |> Nx.remainder(16) |> Nx.less(8),
+        Nx.iota({64, 1, 1}) |> Nx.remainder(16) |> Nx.less(8)
+      )
+      |> Nx.multiply(128),
+      Nx.logical_and(
+        Nx.iota({1, 64, 1}) |> Nx.remainder(16) |> Nx.less(8),
+        Nx.iota({64, 1, 1}) |> Nx.remainder(16) |> Nx.less(8)
+      )
+      |> Nx.logical_not()
+      |> Nx.multiply(255)
+    ],
+    axis: 2
+  )
+  |> Nx.reshape({1, 64, 64, 3}),
+  Nx.concatenate(
+    [
+      Nx.logical_xor(
+        Nx.iota({1, 64, 1}) |> Nx.remainder(16) |> Nx.less(8),
+        Nx.iota({64, 1, 1}) |> Nx.remainder(16) |> Nx.less(8)
+      )
+      |> Nx.logical_not()
+      |> Nx.multiply(255),
+      Nx.logical_or(
+        Nx.iota({1, 64, 1}) |> Nx.remainder(16) |> Nx.less(8),
+        Nx.iota({64, 1, 1}) |> Nx.remainder(16) |> Nx.less(8)
+      )
+      |> Nx.multiply(128),
+      Nx.logical_and(
+        Nx.iota({1, 64, 1}) |> Nx.remainder(16) |> Nx.less(8),
+        Nx.iota({64, 1, 1}) |> Nx.remainder(16) |> Nx.less(8)
+      )
+      |> Nx.logical_not()
+      |> Nx.multiply(255)
+    ],
+    axis: 0
+  )
+  |> Nx.reshape({3, 64, 64, 1})
+]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Multiple RGBA images stacked"
+  titel: "Colored Pattern",
+  labels: ["RGB", "Separate Channels"]
 )
 ```
 
 ```elixir
 [
-  Nx.iota({1,64,1}) |> Nx.divide(63) |> Nx.broadcast({64,64,1}), 
-  Nx.iota({64,1,1}) |> Nx.divide(63) |> Nx.broadcast({64,64,1}) 
+  Nx.iota({1, 64, 1}) |> Nx.divide(63) |> Nx.broadcast({64, 64, 1}),
+  Nx.iota({64, 1, 1}) |> Nx.divide(63) |> Nx.broadcast({64, 64, 1})
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Gradients",
@@ -164,30 +236,34 @@ Nx.stack([
 ```
 
 ```elixir
-colormix = Nx.concatenate([
-  # red
-  Nx.iota({64, 1, 1})
-    |> Nx.multiply(4)
-    |> Nx.broadcast({64,64,1}),
+colormix =
+  Nx.concatenate(
+    [
+      # red
+      Nx.iota({64, 1, 1})
+      |> Nx.multiply(4)
+      |> Nx.broadcast({64, 64, 1}),
 
-  #green
-  Nx.iota({1, 64, 1})
-    |> Nx.multiply(4)
-    |> Nx.broadcast({64,64,1}),
+      # green
+      Nx.iota({1, 64, 1})
+      |> Nx.multiply(4)
+      |> Nx.broadcast({64, 64, 1}),
 
-  #blue
-  Nx.tensor(152) |>
-  Nx.broadcast({64,64,1}),
+      # blue
+      Nx.tensor(152)
+      |> Nx.broadcast({64, 64, 1}),
 
-  # alpha
-  Nx.tensor(255) |>
-  Nx.broadcast({64,64,1})
-], axis: 2)
-|> Nx.reshape({1, 64,64, 4})
+      # alpha
+      Nx.tensor(255)
+      |> Nx.broadcast({64, 64, 1})
+    ],
+    axis: 2
+  )
+  |> Nx.reshape({1, 64, 64, 4})
 
 [
-  colormix | 
-  0..2 |> Enum.map(&Nx.take(colormix, Nx.tensor([&1]), axis: 3))
+  colormix
+  | 0..2 |> Enum.map(&Nx.take(colormix, Nx.tensor([&1]), axis: 3))
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Colorful gradient mixed from 3 channels",
@@ -199,20 +275,26 @@ colormix = Nx.concatenate([
 
 ```elixir
 colormix
-|> Nx.multiply(Nx.concatenate([
-  1 |> Nx.broadcast({1,64,64,1}), # R
-  1 |> Nx.broadcast({1,64,64,1}), # G
-  1 |> Nx.broadcast({1,64,64,1}), # B
-  # Alpha Gradient
-  Nx.iota({1,64,1}) |> Nx.divide(64) |> Nx.broadcast({1, 64,64,1}),
-], axis: 3))
-|> KinoZoetrope.TensorStack.new(
-  titel: "Colorful gradient mixed from 3 channels"
+|> Nx.multiply(
+  Nx.concatenate(
+    [
+      # R
+      1 |> Nx.broadcast({1, 64, 64, 1}),
+      # G
+      1 |> Nx.broadcast({1, 64, 64, 1}),
+      # B
+      1 |> Nx.broadcast({1, 64, 64, 1}),
+      # Alpha Gradient
+      Nx.iota({1, 64, 1}) |> Nx.divide(64) |> Nx.broadcast({1, 64, 64, 1})
+    ],
+    axis: 3
+  )
 )
+|> KinoZoetrope.TensorStack.new(titel: "Colorful gradient mixed from 3 channels")
 ```
 
 ```elixir
-defmodule UsingOperators do 
+defmodule UsingOperators do
   import Nx.Defn
 
   # Operatoren können in `defn` benutzt werden
@@ -221,7 +303,7 @@ defmodule UsingOperators do
   end
 end
 
-Nx.iota({7,7, 1})
+Nx.iota({7, 7, 1})
 |> UsingOperators.some_calculation()
 |> KinoZoetrope.TensorStack.new(
   titel: "Some quadradic gradient",
@@ -231,24 +313,30 @@ Nx.iota({7,7, 1})
 
 ```elixir
 rad = 32
-diam = 2*rad
+diam = 2 * rad
 
-dx = Nx.iota({1,diam,1})
-  |> Nx.broadcast({diam,diam,1})
+dx =
+  Nx.iota({1, diam, 1})
+  |> Nx.broadcast({diam, diam, 1})
   |> Nx.subtract(rad)
   |> Nx.divide(rad)
-dx2 = dx|> Nx.pow(2)
 
-dy = Nx.iota({diam,1,1})
-  |> Nx.broadcast({diam,diam,1})
+dx2 = dx |> Nx.pow(2)
+
+dy =
+  Nx.iota({diam, 1, 1})
+  |> Nx.broadcast({diam, diam, 1})
   |> Nx.subtract(rad)
   |> Nx.divide(rad)
+
 dy2 = dy |> Nx.pow(2)
 
 circle_radius2 = Nx.add(dx2, dy2)
-circle_radius = circle_radius2 |> Nx.sqrt() 
-  |> Nx.reshape({1, diam,diam, 1})
 
+circle_radius =
+  circle_radius2
+  |> Nx.sqrt()
+  |> Nx.reshape({1, diam, diam, 1})
 
 circle_angle = Nx.atan2(dy, dx)
 circle2_angle = Nx.atan2(dy2, dx2)
@@ -256,19 +344,20 @@ circle2_angle = Nx.atan2(dy2, dx2)
 [dx2, dy2, circle_radius, circle_angle, circle2_angle, circle_radius2]
 |> KinoZoetrope.TensorStack.new(
   titel: "Circular masked generated via thresholding",
-  labels: ["Distance y²", "Distance y²", "Radius","Angle", "Angle Squared"],
-  cmaps: [nil,nil,nil,"hsv","hsv"]
+  labels: ["Distance y²", "Distance y²", "Radius", "Angle", "Angle Squared"],
+  cmaps: [nil, nil, nil, "hsv", "hsv"]
 )
 ```
 
 ```elixir
 alias VegaLite, as: Vl
 
-radius_slice =  circle_radius
-  |> Nx.slice([0, 32, 0, 0], [1, 1, 64, 1]) 
-  |> Nx.to_flat_list() 
+radius_slice =
+  circle_radius
+  |> Nx.slice([0, 32, 0, 0], [1, 1, 64, 1])
+  |> Nx.to_flat_list()
   |> Enum.with_index()
-  |> Enum.map(fn {v,i} -> %{x: i, y: v} end )
+  |> Enum.map(fn {v, i} -> %{x: i, y: v} end)
 
 Vl.new(width: 600, height: 400)
 |> Vl.data_from_values(radius_slice)
@@ -278,10 +367,11 @@ Vl.new(width: 600, height: 400)
 ```
 
 ```elixir
-mask = circle_radius
+mask =
+  circle_radius
   # threshold radius
   |> Nx.less_equal(0.5)
-  |> Nx.reshape({1, 64,64, 1})
+  |> Nx.reshape({1, 64, 64, 1})
 
 [
   # Circle
@@ -289,12 +379,14 @@ mask = circle_radius
   # Inner Mask
   mask,
   # Outer Mask
-  mask |> Nx.logical_not(),
+  mask |> Nx.logical_not()
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Circular masked generated via thresholding",
   labels: [
-    "Circle", "Inner", "Outer",
+    "Circle",
+    "Inner",
+    "Outer"
   ]
 )
 ```
@@ -304,83 +396,104 @@ mask = circle_radius
   # Ring
   Nx.logical_and(Nx.greater(circle_radius, 0.4), Nx.less(circle_radius, 0.6)),
   # Rings
-  circle_radius |> Nx.multiply(16) |> Nx.sin,
+  circle_radius |> Nx.multiply(16) |> Nx.sin(),
   # Squashed Rings
   circle_radius |> Nx.multiply(16) |> Nx.pow(0.3) |> Nx.multiply(10) |> Nx.sin(),
 
   # Animated Rings
-  5..60//3 
-  |> Enum.map(&Nx.sin(Nx.multiply(Nx.pow(circle_radius, 2/&1), 2*&1))) 
+  5..60//3
+  |> Enum.map(&Nx.sin(Nx.multiply(Nx.pow(circle_radius, 2 / &1), 2 * &1)))
   |> Nx.concatenate(axis: 0),
 
   # Sinc = (sin(x)/x)
-  circle_radius |> Nx.multiply(16) |> Nx.sin() |> Nx.divide(circle_radius) |> then(&Nx.select(Nx.is_nan(&1), 1, &1)),
+  circle_radius
+  |> Nx.multiply(16)
+  |> Nx.sin()
+  |> Nx.divide(circle_radius)
+  |> then(&Nx.select(Nx.is_nan(&1), 1, &1)),
 
   # Spiral 
-  1..40//2 
+  1..40//2
   |> Enum.map(fn a ->
-    circle_radius 
+    circle_radius
     |> Nx.multiply(16)
-    |> Nx.pow(0.3) 
-    |> Nx.multiply(10) 
-    |> Nx.add(circle_angle) 
-    |> Nx.subtract(a/3) 
+    |> Nx.pow(0.3)
+    |> Nx.multiply(10)
+    |> Nx.add(circle_angle)
+    |> Nx.subtract(a / 3)
     |> Nx.sin()
-  end) |> Nx.concatenate(axis: 0),
+  end)
+  |> Nx.concatenate(axis: 0),
 
   # 2D Fourier Transform of Spiral Swirl
-  circle_radius |> Nx.pow(0.3) |> Nx.multiply(10) |> Nx.add(circle_angle) |> Nx.sin()
-  |> Nx.reshape({1, 1, 64,64}) |> Nx.fft2() |> Nx.reshape({1, 64,64, 1}) 
-  |> Nx.abs() |> Nx.log(),
+  circle_radius
+  |> Nx.pow(0.3)
+  |> Nx.multiply(10)
+  |> Nx.add(circle_angle)
+  |> Nx.sin()
+  |> Nx.reshape({1, 1, 64, 64})
+  |> Nx.fft2()
+  |> Nx.reshape({1, 64, 64, 1})
+  |> Nx.abs()
+  |> Nx.log(),
 
   # Swirl
   1..20
   |> Enum.map(fn a ->
     circle_radius
     |> Nx.multiply(16)
-    |> Nx.pow(0.25) 
-    |> Nx.subtract(:math.pi - 0.1)
+    |> Nx.pow(0.25)
+    |> Nx.subtract(:math.pi() - 0.1)
     |> Nx.multiply(a)
-    |> Nx.add(circle_angle)  
+    |> Nx.add(circle_angle)
     |> Nx.sin()
-  end) |> Nx.concatenate(axis: 0),
+  end)
+  |> Nx.concatenate(axis: 0)
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Colorful Funny stuff",
   labels: [
     "Ring",
-    "Rings","Squashed Rings", "Animated Rings", 
-    "Sinc", "Spiral", "Spiral Fourier Transform", "Animated Swirl"
+    "Rings",
+    "Squashed Rings",
+    "Animated Rings",
+    "Sinc",
+    "Spiral",
+    "Spiral Fourier Transform",
+    "Animated Swirl"
   ],
   cmaps: [
-    nil, nil,"viridis","rainbow", 
-    "jet","managua","CMRmap", "plasma"
+    nil,
+    nil,
+    "viridis",
+    "rainbow",
+    "jet",
+    "managua",
+    "CMRmap",
+    "plasma"
   ]
 )
 ```
 
 ```elixir
 Enum.zip(
-  1..140 |> Enum.map(&:math.sin(&1/3)*20), 
-  20..140 |> Enum.map(&:math.sin(&1/7)*17)
+  1..140 |> Enum.map(&(:math.sin(&1 / 3) * 20)),
+  20..140 |> Enum.map(&(:math.sin(&1 / 7) * 17))
 )
-|> Enum.map(
-  fn {x,y} -> 
-    Nx.add(
-      Nx.iota({1,diam,1})
-        |> Nx.broadcast({diam,diam,1})
-        |> Nx.subtract(rad + x)
-        |> Nx.pow(2), 
-        
-      Nx.iota({diam,1,1})
-        |> Nx.broadcast({diam,diam,1})
-        |> Nx.subtract(rad + y)
-        |> Nx.pow(2)
-    )
-    |> Nx.sqrt()
-    |> Nx.reshape({1, diam,diam, 1})
-  end
-)
+|> Enum.map(fn {x, y} ->
+  Nx.add(
+    Nx.iota({1, diam, 1})
+    |> Nx.broadcast({diam, diam, 1})
+    |> Nx.subtract(rad + x)
+    |> Nx.pow(2),
+    Nx.iota({diam, 1, 1})
+    |> Nx.broadcast({diam, diam, 1})
+    |> Nx.subtract(rad + y)
+    |> Nx.pow(2)
+  )
+  |> Nx.sqrt()
+  |> Nx.reshape({1, diam, diam, 1})
+end)
 |> Nx.concatenate(axis: 0)
 |> Nx.less(10)
 |> KinoZoetrope.TensorStack.new(
@@ -393,39 +506,38 @@ Enum.zip(
 1..3
 |> Enum.map(fn c ->
   Enum.zip(
-    1..90 |> Enum.map(&:math.sin(&1/17.0+c)*20), 
-    1..90 |> Enum.map(&:math.cos(c*&1/13.0+c)*17)
+    1..90 |> Enum.map(&(:math.sin(&1 / 17.0 + c) * 20)),
+    1..90 |> Enum.map(&(:math.cos(c * &1 / 13.0 + c) * 17))
   )
-  |> Enum.map(fn 
-    {x,y} -> Nx.add(
-      Nx.iota({1,diam,1})
+  |> Enum.map(fn
+    {x, y} ->
+      Nx.add(
+        Nx.iota({1, diam, 1})
         |> Nx.broadcast({diam, diam, 1})
         |> Nx.subtract(rad - x)
-        |> Nx.pow(2), 
-    
-      Nx.iota({diam, 1,1})
+        |> Nx.pow(2),
+        Nx.iota({diam, 1, 1})
         |> Nx.broadcast({diam, diam, 1})
         |> Nx.subtract(rad - y)
         |> Nx.pow(2)
-    )
-    |> Nx.reshape({1, diam,diam, 1})
+      )
+      |> Nx.reshape({1, diam, diam, 1})
   end)
-  |> Nx.concatenate(axis: 0)  
+  |> Nx.concatenate(axis: 0)
   |> Nx.sqrt()
 end)
-|> Nx.concatenate(axis: 3) 
+|> Nx.concatenate(axis: 3)
 |> then(&Nx.subtract(1, &1))
 |> then(&Nx.subtract(&1, Nx.reduce_min(&1)))
 |> then(&Nx.divide(&1, Nx.reduce_max(&1)))
 |> Nx.multiply(255)
-|> KinoZoetrope.TensorStack.new(
-  titel: "Animated Color channels"
-)
+|> KinoZoetrope.TensorStack.new(titel: "Animated Color channels")
 ```
 
 ```elixir
 [
-  colormix, Nx.multiply(mask, colormix)
+  colormix,
+  Nx.multiply(mask, colormix)
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Gradient cut with circular mask",
@@ -436,36 +548,36 @@ end)
 ```elixir
 size = 64
 
-gaussian = Nx.add(
-  Nx.broadcast(0, {size,size,1})
-    |> Nx.add(Nx.iota({1,size,1}))
-    |> Nx.reshape({1, size,size})
+gaussian =
+  Nx.add(
+    Nx.broadcast(0, {size, size, 1})
+    |> Nx.add(Nx.iota({1, size, 1}))
+    |> Nx.reshape({1, size, size})
     |> Nx.subtract(size / 2 - 0.5)
-    |> Nx.pow(2), 
-  Nx.broadcast(0, {size,size,1})
-    |> Nx.add(Nx.iota({size,1,1}))
-    |> Nx.reshape({1, size,size})
-    |> Nx.subtract(size/2 - 0.5)
+    |> Nx.pow(2),
+    Nx.broadcast(0, {size, size, 1})
+    |> Nx.add(Nx.iota({size, 1, 1}))
+    |> Nx.reshape({1, size, size})
+    |> Nx.subtract(size / 2 - 0.5)
     |> Nx.pow(2)
-)
-|> Nx.divide(Nx.pow(size/4, 2))
-|> Nx.negate()
-|> Nx.exp()
+  )
+  |> Nx.divide(Nx.pow(size / 4, 2))
+  |> Nx.negate()
+  |> Nx.exp()
 
 gaussian
-|> KinoZoetrope.TensorStack.new(
-  titel: "Gaußian Mask / Filter of size #{size}x#{size}"
-)
+|> KinoZoetrope.TensorStack.new(titel: "Gaußian Mask / Filter of size #{size}x#{size}")
 ```
 
 ```elixir
 alias VegaLite, as: Vl
 
-gaussian_slice =  gaussian
-  |> Nx.slice([32, 0, 0], [1, 64, 1]) 
-  |> Nx.to_flat_list() 
+gaussian_slice =
+  gaussian
+  |> Nx.slice([32, 0, 0], [1, 64, 1])
+  |> Nx.to_flat_list()
   |> Enum.with_index()
-  |> Enum.map(fn {v,i} -> %{x: i, y: v} end )
+  |> Enum.map(fn {v, i} -> %{x: i, y: v} end)
 
 Vl.new(width: 600, height: 400, title: "1D Slice of 2D Gaußian")
 |> Vl.data_from_values(gaussian_slice)
@@ -475,26 +587,38 @@ Vl.new(width: 600, height: 400, title: "1D Slice of 2D Gaußian")
 ```
 
 ```elixir
-rgba_color_mask = Nx.stack([
-    gaussian,
-    gaussian,
-    gaussian,
-    Nx.broadcast(1.0, Nx.shape(gaussian))
- ],axis: 3) 
+rgba_color_mask =
+  Nx.stack(
+    [
+      gaussian,
+      gaussian,
+      gaussian,
+      Nx.broadcast(1.0, Nx.shape(gaussian))
+    ],
+    axis: 3
+  )
 
-rgba_blue_mask = Nx.stack([
-    Nx.broadcast(1.0, Nx.shape(gaussian)),
-    Nx.broadcast(1.0, Nx.shape(gaussian)),
-    gaussian,
-    Nx.broadcast(1.0, Nx.shape(gaussian))
-],axis: 3) 
+rgba_blue_mask =
+  Nx.stack(
+    [
+      Nx.broadcast(1.0, Nx.shape(gaussian)),
+      Nx.broadcast(1.0, Nx.shape(gaussian)),
+      gaussian,
+      Nx.broadcast(1.0, Nx.shape(gaussian))
+    ],
+    axis: 3
+  )
 
-rgba_alpha_mask = Nx.stack([
-    Nx.broadcast(1.0, Nx.shape(gaussian)),
-    Nx.broadcast(1.0, Nx.shape(gaussian)),
-    Nx.broadcast(1.0, Nx.shape(gaussian)),
-    gaussian,
- ],axis: 3) 
+rgba_alpha_mask =
+  Nx.stack(
+    [
+      Nx.broadcast(1.0, Nx.shape(gaussian)),
+      Nx.broadcast(1.0, Nx.shape(gaussian)),
+      Nx.broadcast(1.0, Nx.shape(gaussian)),
+      gaussian
+    ],
+    axis: 3
+  )
 
 [
   rgba_color_mask
@@ -502,20 +626,22 @@ rgba_alpha_mask = Nx.stack([
   |> Nx.multiply(colormix)
   |> Nx.multiply(1.5)
   |> Nx.min(255),
-
   rgba_blue_mask
   |> Nx.multiply(colormix)
   |> Nx.min(255),
-  
   rgba_alpha_mask
   |> Nx.pow(0.4)
   |> Nx.multiply(colormix)
   |> Nx.multiply(1.5)
-  |> Nx.min(255),
+  |> Nx.min(255)
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Color gradient multiplied with gaussien mask",
-  labels: ["Color channels multiplied", "Only blue channel masked out", "Alpha Channel Masked out"]
+  labels: [
+    "Color channels multiplied",
+    "Only blue channel masked out",
+    "Alpha Channel Masked out"
+  ]
 )
 ```
 
@@ -523,12 +649,14 @@ rgba_alpha_mask = Nx.stack([
 {:ok, img} = Image.open(Kino.FS.file_path("perlgirl.png"))
 {:ok, bin} = Vix.Vips.Image.write_to_binary(img)
 
-girl_col = bin 
-  |> Nx.from_binary(:u8) 
-  |> Nx.reshape({1, 64, 64, 4}) 
+girl_col =
+  bin
+  |> Nx.from_binary(:u8)
+  |> Nx.reshape({1, 64, 64, 4})
 
-girl_bw = girl_col
-  |> Nx.reshape({64, 64, 4}) 
+girl_bw =
+  girl_col
+  |> Nx.reshape({64, 64, 4})
   # Discard alpha channel
   |> Nx.slice_along_axis(0, 3, axis: 2)
   # average color channels
@@ -537,10 +665,10 @@ girl_bw = girl_col
   |> Nx.reshape({64, 64, 1})
 
 [
-  girl_col, 
-  girl_col |> Nx.transpose(axes: [3,1,2,0]), 
+  girl_col,
+  girl_col |> Nx.transpose(axes: [3, 1, 2, 0]),
   girl_bw
-] 
+]
 |> KinoZoetrope.TensorStack.new(
   titel: "Image read from the file system",
   labels: ["RGBA Image", "Single Channel (Slider)", "Grayscale (mean)"]
@@ -551,16 +679,18 @@ girl_bw = girl_col
 {:ok, img} = Image.open(Kino.FS.file_path("hex.png"))
 {:ok, bin} = Vix.Vips.Image.write_to_binary(img)
 
-hex_col = bin 
-  |> Nx.from_binary(:u8) 
-  |> Nx.reshape({1, :auto, 98, 4}) 
+hex_col =
+  bin
+  |> Nx.from_binary(:u8)
+  |> Nx.reshape({1, :auto, 98, 4})
 
 hex_alpha = hex_col |> Nx.reshape({1, :auto, 98, 4}) |> Nx.slice_along_axis(3, 1, axis: 3)
 
-hex_bw = hex_col
-  |> Nx.reshape({:auto, 98, 4}) 
+hex_bw =
+  hex_col
+  |> Nx.reshape({:auto, 98, 4})
   # Discard alpha channel
-  |> Nx.take(Nx.tensor([0,1,2]), axis: 2)
+  |> Nx.take(Nx.tensor([0, 1, 2]), axis: 2)
   # or |> Nx.slice_along_axis(0, 3, axis: 2)
   # average color channels
   |> Nx.mean(axes: [2])
@@ -568,80 +698,86 @@ hex_bw = hex_col
   |> Nx.reshape({1, :auto, 98, 1})
 
 # stich alpha channel back to r==g==b channels
-hex_bw_alpha = [hex_bw, hex_bw, hex_bw, hex_alpha] 
-  |> Nx.concatenate(axis: 3) 
+hex_bw_alpha =
+  [hex_bw, hex_bw, hex_bw, hex_alpha]
+  |> Nx.concatenate(axis: 3)
 
 [
-  hex_col, 
-  hex_col |> Nx.take(Nx.tensor([1,2,0,3]), axis: 3),
-  hex_col |> Nx.transpose(axes: [3,1,2,0]), 
+  hex_col,
+  hex_col |> Nx.take(Nx.tensor([1, 2, 0, 3]), axis: 3),
+  hex_col |> Nx.transpose(axes: [3, 1, 2, 0]),
   hex_alpha,
   hex_bw,
   hex_bw_alpha
-] 
+]
 |> KinoZoetrope.TensorStack.new(
   titel: "Elixir Hex Logo",
   labels: [
-    "RGBA Image", 
+    "RGBA Image",
     "Swapped Channels",
-    "Single Color Channel (Slider)", 
-    "Alpha", 
-    "Grayscale (mean)", 
+    "Single Color Channel (Slider)",
+    "Alpha",
+    "Grayscale (mean)",
     "Grayscale with Alpha"
   ]
 )
 ```
 
 ```elixir
-make_gauss = fn size -> 
-  Nx.add( Nx.broadcast(0, {size,size,1}) 
-    |> Nx.add(Nx.iota({1,size,1})) 
-    |> Nx.reshape({1, size,size, 1}) 
-    |> Nx.subtract(size / 2 - 0.5) 
-    |> Nx.pow(2), Nx.broadcast(0, {size,size,1}) 
-    |> Nx.add(Nx.iota({size,1,1})) 
-    |> Nx.reshape({1, size,size, 1})
-    |> Nx.subtract(size/2 - 0.5) 
-    |> Nx.pow(2) ) 
-    |> Nx.divide(Nx.pow(size/4, 2)) 
-    |> Nx.as_type(:f32)
-    |> Nx.negate() 
-    |> Nx.exp() 
-    |> then(&Nx.divide(&1, Nx.sum(&1)))
-    |> Nx.reshape({1,1,size,size})
-    |> Nx.broadcast({4, 1,size,size})
+make_gauss = fn size ->
+  Nx.add(
+    Nx.broadcast(0, {size, size, 1})
+    |> Nx.add(Nx.iota({1, size, 1}))
+    |> Nx.reshape({1, size, size, 1})
+    |> Nx.subtract(size / 2 - 0.5)
+    |> Nx.pow(2),
+    Nx.broadcast(0, {size, size, 1})
+    |> Nx.add(Nx.iota({size, 1, 1}))
+    |> Nx.reshape({1, size, size, 1})
+    |> Nx.subtract(size / 2 - 0.5)
+    |> Nx.pow(2)
+  )
+  |> Nx.divide(Nx.pow(size / 4, 2))
+  |> Nx.as_type(:f32)
+  |> Nx.negate()
+  |> Nx.exp()
+  |> then(&Nx.divide(&1, Nx.sum(&1)))
+  |> Nx.reshape({1, 1, size, size})
+  |> Nx.broadcast({4, 1, size, size})
 end
 
 11
-|> then(&[
-  # Original RGBA
-  girl_col,
+|> then(
+  &[
+    # Original RGBA
+    girl_col,
 
-  # Blurred Result
-  girl_col
-  |> Nx.transpose(axes: [0,3,1,2])
-  |> Nx.conv(make_gauss.(&1), padding: :same, feature_group_size: 4)
-  |> Nx.transpose(axes: [0,2,3,1]),
+    # Blurred Result
+    girl_col
+    |> Nx.transpose(axes: [0, 3, 1, 2])
+    |> Nx.conv(make_gauss.(&1), padding: :same, feature_group_size: 4)
+    |> Nx.transpose(axes: [0, 2, 3, 1]),
 
-  # single channel
-  girl_col |> Nx.transpose(axes: [3,1,2,0]),
+    # single channel
+    girl_col |> Nx.transpose(axes: [3, 1, 2, 0]),
 
-  # Filter
-  make_gauss.(&1) |> Nx.transpose(axes: [0,2,3,1]),
+    # Filter
+    make_gauss.(&1) |> Nx.transpose(axes: [0, 2, 3, 1]),
 
-  # Single channel result
-  girl_col
-  |> Nx.transpose(axes: [0,3,1,2])
-  |> Nx.conv(make_gauss.(&1), padding: :same, feature_group_size: 4)
-  |> Nx.transpose(axes: [1,2,3,0])
-])
+    # Single channel result
+    girl_col
+    |> Nx.transpose(axes: [0, 3, 1, 2])
+    |> Nx.conv(make_gauss.(&1), padding: :same, feature_group_size: 4)
+    |> Nx.transpose(axes: [1, 2, 3, 0])
+  ]
+)
 |> KinoZoetrope.TensorStack.new(
   titel: "Blurred Color Image",
   labels: [
-    "Original RGBA", 
-    "Result RGBA", 
-    "Single Channel (slider)", 
-    "Gaußian Filter", 
+    "Original RGBA",
+    "Result RGBA",
+    "Single Channel (slider)",
+    "Gaußian Filter",
     "Result Single Channel (slider)"
   ]
 )
@@ -650,18 +786,20 @@ end
 ```elixir
 alias VegaLite, as: Vl
 
-girl_slice =  girl_col
-  |> Nx.reshape({64,64,4})
-  |> Nx.slice([32, 0, 0], [1, 64, 4]) 
-  |> Nx.reshape({64,4})
-  |> Nx.to_list() 
-  |> Enum.with_index() 
+girl_slice =
+  girl_col
+  |> Nx.reshape({64, 64, 4})
+  |> Nx.slice([32, 0, 0], [1, 64, 4])
+  |> Nx.reshape({64, 4})
+  |> Nx.to_list()
+  |> Enum.with_index()
   |> Enum.flat_map(fn {vs, x} ->
-    vs |> Enum.with_index() |> Enum.map(fn {v,c} -> 
-       %{x: x, y: v, channel: c}
+    vs
+    |> Enum.with_index()
+    |> Enum.map(fn {v, c} ->
+      %{x: x, y: v, channel: c}
     end)
   end)
-
 
 Vl.new(width: 600, height: 400, title: "Slices across RGBA image")
 |> Vl.data_from_values(girl_slice)
@@ -678,27 +816,32 @@ Vl.new(width: 600, height: 400, title: "Slices across RGBA image")
 ```elixir
 alias VegaLite, as: Vl
 
-girl_col_blurred = for b <- [5,10,15] do 
-  {
-    b,
-    girl_col
-    |> Nx.transpose(axes: [0,3,1,2])
-    |> Nx.conv(make_gauss.(b), padding: :same, feature_group_size: 4)
-    |> Nx.transpose(axes: [0,2,3,1])
-  }
-end
+girl_col_blurred =
+  for b <- [5, 10, 15] do
+    {
+      b,
+      girl_col
+      |> Nx.transpose(axes: [0, 3, 1, 2])
+      |> Nx.conv(make_gauss.(b), padding: :same, feature_group_size: 4)
+      |> Nx.transpose(axes: [0, 2, 3, 1])
+    }
+  end
 
-girl_slice =  girl_col
-  |> Nx.slice([0, 32, 0, 0], [1, 1, 64, 1]) 
-  |> Nx.to_flat_list() 
+girl_slice =
+  girl_col
+  |> Nx.slice([0, 32, 0, 0], [1, 1, 64, 1])
+  |> Nx.to_flat_list()
   |> Enum.with_index()
-  |> Enum.map(fn {v,i} -> %{x: i, y: v, blur: 0} end)
+  |> Enum.map(fn {v, i} -> %{x: i, y: v, blur: 0} end)
 
-girl_blurred_slice =  girl_col_blurred |> Enum.flat_map(
-  &Nx.slice(elem(&1, 1), [0, 32, 0, 0], [1, 1, 64, 1]) 
-  |> Nx.to_flat_list() 
-  |> Enum.with_index()
-  |> Enum.map(fn {v,i} -> %{x: i, y: v, blur: elem(&1, 0)} end))
+girl_blurred_slice =
+  girl_col_blurred
+  |> Enum.flat_map(
+    &(Nx.slice(elem(&1, 1), [0, 32, 0, 0], [1, 1, 64, 1])
+      |> Nx.to_flat_list()
+      |> Enum.with_index()
+      |> Enum.map(fn {v, i} -> %{x: i, y: v, blur: elem(&1, 0)} end))
+  )
 
 Vl.new(width: 600, height: 400, title: "Slices of various blur intensities")
 |> Vl.data_from_values(girl_slice ++ girl_blurred_slice)
@@ -711,40 +854,44 @@ Vl.new(width: 600, height: 400, title: "Slices of various blur intensities")
 ## Sobel Edge Detection
 
 ```elixir
-make_sobel = fn orientation -> 
+make_sobel = fn orientation ->
   Nx.tensor([
-    [-1,-2,-1],
-    [ 0, 0, 0],
-    [+1,+2,+1]
+    [-1, -2, -1],
+    [0, 0, 0],
+    [+1, +2, +1]
   ])
-  |> Nx.transpose(axes: case orientation do 
-      :vertical -> [1,0]
-      :horizontal -> [0,1]
-    end)
-  |> Nx.reshape({1,1,3,3})
-  |> then(&Nx.concatenate([&1,&1,&1,Nx.broadcast(1/9.0, {1,1,3,3})], axis: 0))
+  |> Nx.transpose(
+    axes:
+      case orientation do
+        :vertical -> [1, 0]
+        :horizontal -> [0, 1]
+      end
+  )
+  |> Nx.reshape({1, 1, 3, 3})
+  |> then(&Nx.concatenate([&1, &1, &1, Nx.broadcast(1 / 9.0, {1, 1, 3, 3})], axis: 0))
 end
 
-
-for orient <- [:vertical, :horizontal] do 
-[
-  girl_col |> Nx.transpose(axes: [3,1,2,0]),
-  
-  make_sobel.(orient) |> Nx.transpose(axes: [0,2,3,1]),
-
-  girl_col
-  |> Nx.transpose(axes: [0,3,1,2])
-  |> Nx.divide(255)
-  |> Nx.conv(make_sobel.(orient), padding: :same, feature_group_size: 4)
-  |> Nx.transpose(axes: [1,2,3,0])
-]
+for orient <- [:vertical, :horizontal] do
+  [
+    girl_col |> Nx.transpose(axes: [3, 1, 2, 0]),
+    make_sobel.(orient) |> Nx.transpose(axes: [0, 2, 3, 1]),
+    girl_col
+    |> Nx.transpose(axes: [0, 3, 1, 2])
+    |> Nx.divide(255)
+    |> Nx.conv(make_sobel.(orient), padding: :same, feature_group_size: 4)
+    |> Nx.transpose(axes: [1, 2, 3, 0])
+  ]
 end
 |> List.flatten()
 |> KinoZoetrope.TensorStack.new(
   titel: "Edge Detection via Sobel Filter",
   labels: [
-    "Single Channel (slider)", "Vertical filter", "Vertical Edges", 
-    "Single Channel (slider)", "Horizontal filter", "Horizontal Edges", 
+    "Single Channel (slider)",
+    "Vertical filter",
+    "Vertical Edges",
+    "Single Channel (slider)",
+    "Horizontal filter",
+    "Horizontal Edges"
   ],
   cmap: "viridis"
 )
@@ -753,82 +900,91 @@ end
 ## Edge Orientation
 
 ```elixir
-make_gauss = fn size -> 
-  Nx.add( 
-    Nx.broadcast(0, {size,size,1}) 
-    |> Nx.add(Nx.iota({1,size,1})) 
-    |> Nx.reshape({1, size,size, 1}) 
-    |> Nx.subtract(size / 2 - 0.5) 
-    |> Nx.pow(2), Nx.broadcast(0, {size,size,1}) 
-    |> Nx.add(Nx.iota({size,1,1})) 
-    |> Nx.reshape({1, size,size, 1})
-    |> Nx.subtract(size/2 - 0.5) 
+make_gauss = fn size ->
+  Nx.add(
+    Nx.broadcast(0, {size, size, 1})
+    |> Nx.add(Nx.iota({1, size, 1}))
+    |> Nx.reshape({1, size, size, 1})
+    |> Nx.subtract(size / 2 - 0.5)
+    |> Nx.pow(2),
+    Nx.broadcast(0, {size, size, 1})
+    |> Nx.add(Nx.iota({size, 1, 1}))
+    |> Nx.reshape({1, size, size, 1})
+    |> Nx.subtract(size / 2 - 0.5)
     |> Nx.pow(2)
-  ) 
-  |> Nx.divide(Nx.pow(size/4, 2)) 
+  )
+  |> Nx.divide(Nx.pow(size / 4, 2))
   |> Nx.as_type(:f32)
-  |> Nx.negate() 
-  |> Nx.exp() 
+  |> Nx.negate()
+  |> Nx.exp()
   |> then(&Nx.divide(&1, Nx.sum(&1)))
-  |> Nx.reshape({1,1,size,size})
-  |> then(&Nx.concatenate([&1,&1,&1,Nx.broadcast(0, {1,1,size,size})], axis: 0))
+  |> Nx.reshape({1, 1, size, size})
+  |> then(&Nx.concatenate([&1, &1, &1, Nx.broadcast(0, {1, 1, size, size})], axis: 0))
 end
 
-make_sobel = fn orientation -> 
+make_sobel = fn orientation ->
   Nx.tensor([
-    [-1,-2,-1],
-    [ 0, 0, 0],
-    [+1,+2,+1]
+    [-1, -2, -1],
+    [0, 0, 0],
+    [+1, +2, +1]
   ])
-  |> Nx.transpose(axes: case orientation do 
-      :vertical -> [1,0]
-      :horizontal -> [0,1]
-    end)
-  |> Nx.reshape({1,1,3,3})
-  |> then(&Nx.concatenate([&1,&1,&1,Nx.broadcast(1/9.0, {1,1,3,3})], axis: 0))
+  |> Nx.transpose(
+    axes:
+      case orientation do
+        :vertical -> [1, 0]
+        :horizontal -> [0, 1]
+      end
+  )
+  |> Nx.reshape({1, 1, 3, 3})
+  |> then(&Nx.concatenate([&1, &1, &1, Nx.broadcast(1 / 9.0, {1, 1, 3, 3})], axis: 0))
 end
 
 hypot = fn a, b ->
-  Nx.sqrt(Nx.add(Nx.pow(a,2), Nx.pow(b,2)))
+  Nx.sqrt(Nx.add(Nx.pow(a, 2), Nx.pow(b, 2)))
 end
 
-soft_girl_col = 
+soft_girl_col =
   girl_col
-  |> Nx.transpose(axes: [0,3,1,2])
+  |> Nx.transpose(axes: [0, 3, 1, 2])
   |> Nx.conv(make_gauss.(6), padding: :same, feature_group_size: 4)
-  |> Nx.transpose(axes: [0,2,3,1])
+  |> Nx.transpose(axes: [0, 2, 3, 1])
 
-
-verts = soft_girl_col
-  |> Nx.transpose(axes: [0,3,1,2])
+verts =
+  soft_girl_col
+  |> Nx.transpose(axes: [0, 3, 1, 2])
   |> Nx.divide(255)
   |> Nx.conv(make_sobel.(:vertical), padding: :same, feature_group_size: 4)
-  |> Nx.transpose(axes: [1,2,3,0])
+  |> Nx.transpose(axes: [1, 2, 3, 0])
 
-horts = soft_girl_col
-  |> Nx.transpose(axes: [0,3,1,2])
+horts =
+  soft_girl_col
+  |> Nx.transpose(axes: [0, 3, 1, 2])
   |> Nx.divide(255)
   |> Nx.conv(make_sobel.(:horizontal), padding: :same, feature_group_size: 4)
-  |> Nx.transpose(axes: [1,2,3,0])
+  |> Nx.transpose(axes: [1, 2, 3, 0])
 
-girl_edge_mag = hypot.(verts, horts) 
+girl_edge_mag = hypot.(verts, horts)
 girl_edge_orient = Nx.atan2(verts, horts)
 
 [
-  soft_girl_col |> Nx.transpose(axes: [3,1,2,0]),
+  soft_girl_col |> Nx.transpose(axes: [3, 1, 2, 0]),
   verts,
   horts,
   girl_edge_orient,
   girl_edge_orient,
-  girl_edge_mag 
+  girl_edge_mag
   |> Nx.greater_equal(0.1)
-  |> Nx.multiply(girl_edge_orient),
+  |> Nx.multiply(girl_edge_orient)
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Edge Orientation",
   labels: [
-    "Single Channel (slider)", "Vertical Result", "Horizontal Result", 
-    "Edge Orientation", "Edge Orientation", "masked orientation", 
+    "Single Channel (slider)",
+    "Vertical Result",
+    "Horizontal Result",
+    "Edge Orientation",
+    "Edge Orientation",
+    "masked orientation"
   ],
   cmaps: [nil, "viridis", "viridis", "gray", "hsv", "hsv"]
 )
@@ -838,29 +994,42 @@ girl_edge_orient = Nx.atan2(verts, horts)
 
 ```elixir
 {channels, size, size, _} = Nx.shape(girl_edge_orient)
-step = :math.pi / 4
+step = :math.pi() / 4
 orient_quant = girl_edge_orient |> Nx.divide(step) |> Nx.round() |> Nx.multiply(step)
-orient_x = Nx.sin(orient_quant) |> Nx.round() |> Nx.as_type({:s, 32}) 
+orient_x = Nx.sin(orient_quant) |> Nx.round() |> Nx.as_type({:s, 32})
 orient_y = Nx.cos(orient_quant) |> Nx.round() |> Nx.as_type({:s, 32})
 
 x_right = Nx.iota({1, size, 1}) |> Nx.add(orient_x) |> Nx.add(size) |> Nx.remainder(size)
 y_left = Nx.iota({1, size, 1}) |> Nx.subtract(orient_x) |> Nx.add(size) |> Nx.remainder(size)
 
-y_up   = Nx.iota({size, 1, 1}) |> Nx.add(orient_y) |> Nx.add(size) |> Nx.remainder(size)
+y_up = Nx.iota({size, 1, 1}) |> Nx.add(orient_y) |> Nx.add(size) |> Nx.remainder(size)
 y_down = Nx.iota({size, 1, 1}) |> Nx.subtract(orient_y) |> Nx.add(size) |> Nx.remainder(size)
 
-xy1 = y_up   |> Nx.multiply(size) |> Nx.add(x_right) |> Nx.add(Nx.iota({channels,1,1,1}) |> Nx.multiply(size*size))
-xy2 = y_down |> Nx.multiply(size) |> Nx.add(y_left) |> Nx.add(Nx.iota({channels,1,1,1}) |> Nx.multiply(size*size))
+xy1 =
+  y_up
+  |> Nx.multiply(size)
+  |> Nx.add(x_right)
+  |> Nx.add(Nx.iota({channels, 1, 1, 1}) |> Nx.multiply(size * size))
 
-edge_mag_side_a = girl_edge_mag |> Nx.reshape({:auto}) |> Nx.take(xy1) |> Nx.reshape({channels,size,size,1})
-edge_mag_side_b = girl_edge_mag |> Nx.reshape({:auto}) |> Nx.take(xy2) |> Nx.reshape({channels,size,size,1})
+xy2 =
+  y_down
+  |> Nx.multiply(size)
+  |> Nx.add(y_left)
+  |> Nx.add(Nx.iota({channels, 1, 1, 1}) |> Nx.multiply(size * size))
 
-non_max_suppressed = Nx.greater(girl_edge_mag, 0.2)
- |> Nx.logical_and(Nx.greater(girl_edge_mag, edge_mag_side_a)) 
- |> Nx.logical_and(Nx.greater(girl_edge_mag, edge_mag_side_b))
+edge_mag_side_a =
+  girl_edge_mag |> Nx.reshape({:auto}) |> Nx.take(xy1) |> Nx.reshape({channels, size, size, 1})
+
+edge_mag_side_b =
+  girl_edge_mag |> Nx.reshape({:auto}) |> Nx.take(xy2) |> Nx.reshape({channels, size, size, 1})
+
+non_max_suppressed =
+  Nx.greater(girl_edge_mag, 0.2)
+  |> Nx.logical_and(Nx.greater(girl_edge_mag, edge_mag_side_a))
+  |> Nx.logical_and(Nx.greater(girl_edge_mag, edge_mag_side_b))
 
 [
-  soft_girl_col |> Nx.transpose(axes: [3,1,2,0]),
+  soft_girl_col |> Nx.transpose(axes: [3, 1, 2, 0]),
   girl_edge_mag,
   orient_quant,
   orient_x,
@@ -872,7 +1041,10 @@ non_max_suppressed = Nx.greater(girl_edge_mag, 0.2)
 |> KinoZoetrope.TensorStack.new(
   titel: "Edge Orientation",
   labels: [
-    "Single Channel (slider)", "Edge Magnitude", "Quanzied Orientation", "Orient X", 
+    "Single Channel (slider)",
+    "Edge Magnitude",
+    "Quanzied Orientation",
+    "Orient X",
     "Orient Y",
     "Thin Edges (Canny)",
     "Thin Edge Orientation",
@@ -885,32 +1057,35 @@ non_max_suppressed = Nx.greater(girl_edge_mag, 0.2)
 ## Game of Life
 
 ```elixir
-world = Nx.tensor([
-  [0,0,1,0,0,0,0,0,0,0,0],
-  [1,0,1,0,0,0,0,0,0,0,0],
-  [0,1,1,0,0,0,0,1,0,0,0],
-  [0,0,0,0,0,0,0,0,1,1,0],
-  [0,0,0,0,0,0,0,1,1,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,1,0,0,0,0,0,0,0,0],
-  [0,0,0,1,0,0,0,0,0,0,0],
-  [0,1,1,1,0,0,0,1,0,1,0],
-  [0,0,0,0,0,0,0,0,1,1,0],
-  [0,0,0,0,0,0,0,0,1,0,0],
-])
-|> Nx.reshape({1,11,11,1})
+world =
+  Nx.tensor([
+    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
+  ])
+  |> Nx.reshape({1, 11, 11, 1})
 
-gol_filter = Nx.tensor([
-  [1.0,1.0,1.0],
-  [1.0,0.5,1.0],
-  [1.0,1.0,1.0]
-])
-|> Nx.reshape({1,3,3,1})
-  
+gol_filter =
+  Nx.tensor([
+    [1.0, 1.0, 1.0],
+    [1.0, 0.5, 1.0],
+    [1.0, 1.0, 1.0]
+  ])
+  |> Nx.reshape({1, 3, 3, 1})
+
 [
   Nx.subtract(1, world),
-  gol_filter,
-] |> KinoZoetrope.TensorStack.new(
+  gol_filter
+]
+|> KinoZoetrope.TensorStack.new(
   titel: "Game of Life",
   vmin: 0,
   vmax: 1,
@@ -919,51 +1094,54 @@ gol_filter = Nx.tensor([
 ```
 
 ```elixir
-world = Nx.tensor([
-  [0,0,0,1,0,0,0,0,0,0,0,0],
-  [0,1,0,1,0,0,0,0,0,0,0,0],
-  [0,0,1,1,0,0,0,0,1,0,0,0],
-  [0,0,0,0,0,0,0,0,0,1,1,0],
-  [0,0,0,0,0,0,0,0,1,1,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,1,0,0,0,0,0,0,0,0],
-  [0,0,0,0,1,0,0,0,0,0,0,0],
-  [0,0,1,1,1,0,0,0,1,0,1,0],
-  [0,0,0,0,0,0,0,0,0,1,1,0],
-  [0,0,0,0,0,0,0,0,0,1,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0],
-])
-|> Nx.reshape({1,12,12,1})
-|> Nx.transpose(axes: [0,3,1,2])
+world =
+  Nx.tensor([
+    [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  ])
+  |> Nx.reshape({1, 12, 12, 1})
+  |> Nx.transpose(axes: [0, 3, 1, 2])
 
-
-gol_filter = Nx.tensor([
-  [1.0,1.0,1.0],
-  [1.0,0.3,1.0],
-  [1.0,1.0,1.0],
-])
-|> Nx.reshape({1,1,3,3})
+gol_filter =
+  Nx.tensor([
+    [1.0, 1.0, 1.0],
+    [1.0, 0.3, 1.0],
+    [1.0, 1.0, 1.0]
+  ])
+  |> Nx.reshape({1, 1, 3, 3})
 
 circular_pad_2d = fn tensor, pad_h, pad_w ->
   {_n, _c, h, w} = Nx.shape(tensor)
+
   h_idx =
     Nx.remainder(
       Nx.add(h, Nx.subtract(Nx.iota({h + 2 * pad_h}), pad_h)),
       h
     )
+
   w_idx =
     Nx.remainder(
       Nx.add(w, Nx.subtract(Nx.iota({w + 2 * pad_w}), pad_w)),
       w
     )
-  
+
   tensor
   |> Nx.take(h_idx, axis: 2)
   |> Nx.take(w_idx, axis: 3)
 end
 
-do_step = fn state -> 
-  circular_pad_2d.(state, 1,1)
+do_step = fn state ->
+  circular_pad_2d.(state, 1, 1)
   |> Nx.conv(gol_filter)
   |> Nx.subtract(3)
   |> Nx.abs()
@@ -972,59 +1150,62 @@ end
 
 [
   Stream.iterate(world, do_step)
-    |> Enum.take(40)
-    |> Enum.drop(1)
-    |> Enum.map(&Nx.transpose(Nx.subtract(1, &1), axes: [0,2,3,1]))
-    |> Nx.concatenate(),
-  
+  |> Enum.take(40)
+  |> Enum.drop(1)
+  |> Enum.map(&Nx.transpose(Nx.subtract(1, &1), axes: [0, 2, 3, 1]))
+  |> Nx.concatenate(),
   Stream.iterate(world, do_step)
-    |> Enum.take(40)
-    |> Enum.map(&Nx.transpose(Nx.subtract(1, &1), axes: [0,2,3,1]))
-    |> Nx.concatenate(),
-    
-  gol_filter|> Nx.reshape({1,3,3,1})
+  |> Enum.take(40)
+  |> Enum.map(&Nx.transpose(Nx.subtract(1, &1), axes: [0, 2, 3, 1]))
+  |> Nx.concatenate(),
+  gol_filter |> Nx.reshape({1, 3, 3, 1})
 ]
 |> KinoZoetrope.TensorStack.new(
   titel: "Game of Life",
-  labels: ["World (Prev)" , "World (next)", "Filter Kernel"],
+  labels: ["World (Prev)", "World (next)", "Filter Kernel"],
   vmin: 0,
   vmax: 1
 )
 ```
 
 ```elixir
-world = Nx.tensor([[
-  [0,0,0,1,0,0,0,0,0,0,0,0],
-  [0,1,0,1,0,0,0,0,0,0,0,0],
-  [0,0,1,1,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0],
-]])
+world =
+  Nx.tensor([
+    [
+      [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ]
+  ])
 
-gol_filter_spectrum = Nx.fft2(Nx.tensor([
-  [0.5,1,0,0,0,0,0,0,0,0,0,1.0],
-  [1.0,1,0,0,0,0,0,0,0,0,0,1.0],
-  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
-  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
-  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
-  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
-  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
-  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
-  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
-  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
-  [0.0,0,0,0,0,0,0,0,0,0,0,0.0],
-  [1.0,1.0,0,0,0,0,0,0,0,0,0,1.0],
-]))
+gol_filter_spectrum =
+  Nx.fft2(
+    Nx.tensor([
+      [0.5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0],
+      [1.0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0],
+      [0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0],
+      [0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0],
+      [0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0],
+      [0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0],
+      [0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0],
+      [0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0],
+      [0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0],
+      [0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0],
+      [0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0],
+      [1.0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0]
+    ])
+  )
 
-
-do_step = fn state -> 
+do_step = fn state ->
   Nx.ifft2(Nx.multiply(Nx.fft2(state), gol_filter_spectrum))
   |> Nx.subtract(3)
   |> Nx.abs()
@@ -1033,7 +1214,7 @@ end
 
 Stream.iterate(world, do_step)
 |> Enum.take(100)
-|> Enum.map(&Nx.reshape(Nx.subtract(1, &1), {1,12,12,1}))
+|> Enum.map(&Nx.reshape(Nx.subtract(1, &1), {1, 12, 12, 1}))
 |> Nx.concatenate()
 |> KinoZoetrope.TensorStack.new(
   titel: "Game of Life",
@@ -1044,203 +1225,308 @@ Stream.iterate(world, do_step)
 ## Geometric Transforms
 
 ```elixir
-x = Nx.iota({1,64,1}) |> Nx.broadcast({64,64,1})
-y = Nx.iota({64,1,1}) |> Nx.broadcast({64,64,1})
+x = Nx.iota({1, 64, 1}) |> Nx.broadcast({64, 64, 1})
+y = Nx.iota({64, 1, 1}) |> Nx.broadcast({64, 64, 1})
 
 eye_x = 25
 eye_y = 30
 
 effects = [:scaledup, :scaleddown, :shifted, :rot45, :rot90, :swirl, :warpscale, :fish]
 
-results = for m <- effects do
+results =
+  for m <- effects do
+    {mapped_x, mapped_y} =
+      case m do
+        :shifted ->
+          {
+            x |> Nx.multiply(1) |> Nx.add(32),
+            y |> Nx.multiply(1) |> Nx.add(32)
+          }
 
-  {mapped_x, mapped_y} = case m do
-  :shifted -> 
-    {
-      x |> Nx.multiply(1) |> Nx.add(32), 
-      y |> Nx.multiply(1) |> Nx.add(32)
-    }
-  :scaleddown -> 
-    {
-      x |> Nx.subtract(32) |> Nx.multiply(2) |> Nx.add(32), 
-      y |> Nx.subtract(32) |> Nx.multiply(2) |> Nx.add(32)
-    }
-  :scaledup -> 
-    {
-      x |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32), 
-      y |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32)
-    }
-  :warpscale -> 
-    {
-      x |> Nx.subtract(32) |> Nx.abs() |> Nx.multiply(1/4.0) |> Nx.pow(1/0.6) |> Nx.multiply(x |> Nx.subtract(32) |> Nx.sign()) |> Nx.add(32), 
-      y |> Nx.subtract(32) |> Nx.abs() |> Nx.multiply(1/4.0) |> Nx.pow(1/0.6) |> Nx.multiply(y |> Nx.subtract(32) |> Nx.sign())  |> Nx.add(32)
-    }
-  :rot45 -> 
-    {
-      x |> Nx.subtract(eye_x) |> Nx.multiply(+1) |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1)) |> Nx.multiply(:math.sqrt(2)/2) |> Nx.add(eye_x),
-      y |> Nx.subtract(eye_y) |> Nx.multiply(+1) |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1)) |> Nx.multiply(:math.sqrt(2)/2) |> Nx.add(eye_y)
-    }
-  :rot90-> 
-    {
-      x |> Nx.subtract(eye_x) |> Nx.multiply(0) |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1)) |> Nx.add(eye_x),
-      y |> Nx.subtract(eye_y) |> Nx.multiply(0) |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1)) |> Nx.add(eye_y)
-    }
-  :swirl -> 
-      size = 64
-      center = (size - 1) / 2
-    
-      u = x |> Nx.subtract(center)
-      v = y |> Nx.subtract(center)
-      r2 = Nx.add(Nx.multiply(u, u), Nx.multiply(v, v))
-      theta = Nx.atan2(v, u)
-      
-      k = -0.0015  # twist strength
-      
-      theta_src = theta |> Nx.subtract(Nx.multiply(k, r2))
+        :scaleddown ->
+          {
+            x |> Nx.subtract(32) |> Nx.multiply(2) |> Nx.add(32),
+            y |> Nx.subtract(32) |> Nx.multiply(2) |> Nx.add(32)
+          }
 
-      {
-        center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.cos(theta_src))),
-        center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.sin(theta_src)))
-      }
-  :fish -> 
-      size = 64
-      center = (size - 1) / 2
-    
-      u = x |> Nx.subtract(center)
-      v = y |> Nx.subtract(center)
-      r = Nx.sqrt(Nx.add(Nx.multiply(u, u), Nx.multiply(v, v)))
-      theta = Nx.atan2(v, u)
-            
-      r_source =Nx.pow(r, 1.8) |> Nx.multiply(0.1)
+        :scaledup ->
+          {
+            x |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32),
+            y |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32)
+          }
 
-      {
-        center |> Nx.add(Nx.multiply(r_source, Nx.cos(theta))),
-        center |> Nx.add(Nx.multiply(r_source, Nx.sin(theta)))
-      }
+        :warpscale ->
+          {
+            x
+            |> Nx.subtract(32)
+            |> Nx.abs()
+            |> Nx.multiply(1 / 4.0)
+            |> Nx.pow(1 / 0.6)
+            |> Nx.multiply(x |> Nx.subtract(32) |> Nx.sign())
+            |> Nx.add(32),
+            y
+            |> Nx.subtract(32)
+            |> Nx.abs()
+            |> Nx.multiply(1 / 4.0)
+            |> Nx.pow(1 / 0.6)
+            |> Nx.multiply(y |> Nx.subtract(32) |> Nx.sign())
+            |> Nx.add(32)
+          }
 
-    _ -> {x,y}
+        :rot45 ->
+          {
+            x
+            |> Nx.subtract(eye_x)
+            |> Nx.multiply(+1)
+            |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1))
+            |> Nx.multiply(:math.sqrt(2) / 2)
+            |> Nx.add(eye_x),
+            y
+            |> Nx.subtract(eye_y)
+            |> Nx.multiply(+1)
+            |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1))
+            |> Nx.multiply(:math.sqrt(2) / 2)
+            |> Nx.add(eye_y)
+          }
 
-end
+        :rot90 ->
+          {
+            x
+            |> Nx.subtract(eye_x)
+            |> Nx.multiply(0)
+            |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1))
+            |> Nx.add(eye_x),
+            y
+            |> Nx.subtract(eye_y)
+            |> Nx.multiply(0)
+            |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1))
+            |> Nx.add(eye_y)
+          }
 
+        :swirl ->
+          size = 64
+          center = (size - 1) / 2
 
-  x_repaired = mapped_x |> Nx.round() |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64)  |> Nx.remainder(64)
-  y_repaired = mapped_y |> Nx.round() |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64)  |> Nx.remainder(64)
-  xy =  y_repaired |> Nx.multiply(64) |> Nx.add(x_repaired)
-  
-  girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy) |> Nx.reshape({64,64,1})
+          u = x |> Nx.subtract(center)
+          v = y |> Nx.subtract(center)
+          r2 = Nx.add(Nx.multiply(u, u), Nx.multiply(v, v))
+          theta = Nx.atan2(v, u)
 
-end
+          # twist strength
+          k = -0.0015
 
+          theta_src = theta |> Nx.subtract(Nx.multiply(k, r2))
 
-[girl_bw | results] 
+          {
+            center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.cos(theta_src))),
+            center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.sin(theta_src)))
+          }
+
+        :fish ->
+          size = 64
+          center = (size - 1) / 2
+
+          u = x |> Nx.subtract(center)
+          v = y |> Nx.subtract(center)
+          r = Nx.sqrt(Nx.add(Nx.multiply(u, u), Nx.multiply(v, v)))
+          theta = Nx.atan2(v, u)
+
+          r_source = Nx.pow(r, 1.8) |> Nx.multiply(0.1)
+
+          {
+            center |> Nx.add(Nx.multiply(r_source, Nx.cos(theta))),
+            center |> Nx.add(Nx.multiply(r_source, Nx.sin(theta)))
+          }
+
+        _ ->
+          {x, y}
+      end
+
+    x_repaired =
+      mapped_x
+      |> Nx.round()
+      |> Nx.as_type({:s, 32})
+      |> Nx.remainder(64)
+      |> Nx.add(64)
+      |> Nx.remainder(64)
+
+    y_repaired =
+      mapped_y
+      |> Nx.round()
+      |> Nx.as_type({:s, 32})
+      |> Nx.remainder(64)
+      |> Nx.add(64)
+      |> Nx.remainder(64)
+
+    xy = y_repaired |> Nx.multiply(64) |> Nx.add(x_repaired)
+
+    girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy) |> Nx.reshape({64, 64, 1})
+  end
+
+[girl_bw | results]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Here we girl again", 
-  labels: ["Original" | (for m <- effects, do: "Remapped: #{m}")],
+  titel: "Here we girl again",
+  labels: ["Original" | for(m <- effects, do: "Remapped: #{m}")],
   cmap: "viridis"
 )
 ```
 
 ```elixir
-x = Nx.iota({1,64,1}) |> Nx.broadcast({64,64,1})
-y = Nx.iota({64,1,1}) |> Nx.broadcast({64,64,1})
+x = Nx.iota({1, 64, 1}) |> Nx.broadcast({64, 64, 1})
+y = Nx.iota({64, 1, 1}) |> Nx.broadcast({64, 64, 1})
 
 eye_x = 25
 eye_y = 30
 
 effects = [:scaledup, :scaleddown, :shifted, :rot45, :rot90, :swirl, :warpscale, :fish]
 
-results = for m <- effects do
+results =
+  for m <- effects do
+    {mapped_x, mapped_y} =
+      case m do
+        :shifted ->
+          {
+            x |> Nx.multiply(1) |> Nx.add(32),
+            y |> Nx.multiply(1) |> Nx.add(32)
+          }
 
-  {mapped_x, mapped_y} = case m do
-  :shifted -> 
-    {
-      x |> Nx.multiply(1) |> Nx.add(32), 
-      y |> Nx.multiply(1) |> Nx.add(32)
-    }
-  :scaleddown -> 
-    {
-      x |> Nx.subtract(32) |> Nx.multiply(2) |> Nx.add(32), 
-      y |> Nx.subtract(32) |> Nx.multiply(2) |> Nx.add(32)
-    }
-  :scaledup -> 
-    {
-      x |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32), 
-      y |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32)
-    }
-  :warpscale -> 
-    {
-      x |> Nx.subtract(32) |> Nx.abs() |> Nx.multiply(1/4.0) |> Nx.pow(1/0.6) |> Nx.multiply(x |> Nx.subtract(32) |> Nx.sign()) |> Nx.add(32), 
-      y |> Nx.subtract(32) |> Nx.abs() |> Nx.multiply(1/4.0) |> Nx.pow(1/0.6) |> Nx.multiply(y |> Nx.subtract(32) |> Nx.sign())  |> Nx.add(32)
-    }
-  :rot45 -> 
-    {
-      x |> Nx.subtract(eye_x) |> Nx.multiply(+1) |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1)) |> Nx.multiply(:math.sqrt(2)/2) |> Nx.add(eye_x),
-      y |> Nx.subtract(eye_y) |> Nx.multiply(+1) |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1)) |> Nx.multiply(:math.sqrt(2)/2) |> Nx.add(eye_y)
-    }
-  :rot90-> 
-    {
-      x |> Nx.subtract(eye_x) |> Nx.multiply(0) |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1)) |> Nx.add(eye_x),
-      y |> Nx.subtract(eye_y) |> Nx.multiply(0) |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1)) |> Nx.add(eye_y)
-    }
-  :swirl -> 
-      size = 64
-      center = (size - 1) / 2
-    
-      u = x |> Nx.subtract(center)
-      v = y |> Nx.subtract(center)
-      r2 = Nx.add(Nx.multiply(u, u), Nx.multiply(v, v))
-      theta = Nx.atan2(v, u)
-      
-      k = -0.0015  # twist strength
-      
-      theta_src = theta |> Nx.subtract(Nx.multiply(k, r2))
+        :scaleddown ->
+          {
+            x |> Nx.subtract(32) |> Nx.multiply(2) |> Nx.add(32),
+            y |> Nx.subtract(32) |> Nx.multiply(2) |> Nx.add(32)
+          }
 
-      {
-        center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.cos(theta_src))),
-        center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.sin(theta_src)))
-      }
-  :fish -> 
-      size = 64
-      center = (size - 1) / 2
-    
-      u = x |> Nx.subtract(center)
-      v = y |> Nx.subtract(center)
-      r = Nx.sqrt(Nx.add(Nx.multiply(u, u), Nx.multiply(v, v)))
-      theta = Nx.atan2(v, u)
-            
-      r_source =Nx.pow(r, 1.8) |> Nx.multiply(0.1)
+        :scaledup ->
+          {
+            x |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32),
+            y |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32)
+          }
 
-      {
-        center |> Nx.add(Nx.multiply(r_source, Nx.cos(theta))),
-        center |> Nx.add(Nx.multiply(r_source, Nx.sin(theta)))
-      }
+        :warpscale ->
+          {
+            x
+            |> Nx.subtract(32)
+            |> Nx.abs()
+            |> Nx.multiply(1 / 4.0)
+            |> Nx.pow(1 / 0.6)
+            |> Nx.multiply(x |> Nx.subtract(32) |> Nx.sign())
+            |> Nx.add(32),
+            y
+            |> Nx.subtract(32)
+            |> Nx.abs()
+            |> Nx.multiply(1 / 4.0)
+            |> Nx.pow(1 / 0.6)
+            |> Nx.multiply(y |> Nx.subtract(32) |> Nx.sign())
+            |> Nx.add(32)
+          }
 
-    _ -> {x,y}
+        :rot45 ->
+          {
+            x
+            |> Nx.subtract(eye_x)
+            |> Nx.multiply(+1)
+            |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1))
+            |> Nx.multiply(:math.sqrt(2) / 2)
+            |> Nx.add(eye_x),
+            y
+            |> Nx.subtract(eye_y)
+            |> Nx.multiply(+1)
+            |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1))
+            |> Nx.multiply(:math.sqrt(2) / 2)
+            |> Nx.add(eye_y)
+          }
 
-end
+        :rot90 ->
+          {
+            x
+            |> Nx.subtract(eye_x)
+            |> Nx.multiply(0)
+            |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1))
+            |> Nx.add(eye_x),
+            y
+            |> Nx.subtract(eye_y)
+            |> Nx.multiply(0)
+            |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1))
+            |> Nx.add(eye_y)
+          }
 
+        :swirl ->
+          size = 64
+          center = (size - 1) / 2
 
-  x_repaired = mapped_x |> Nx.round() |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64)  |> Nx.remainder(64)
-  y_repaired = mapped_y |> Nx.round() |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64)  |> Nx.remainder(64)
+          u = x |> Nx.subtract(center)
+          v = y |> Nx.subtract(center)
+          r2 = Nx.add(Nx.multiply(u, u), Nx.multiply(v, v))
+          theta = Nx.atan2(v, u)
 
-  xy =  y_repaired |> Nx.multiply(64) |> Nx.add(x_repaired)
-  
-  girl_mapped = girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy) |> Nx.reshape({64,64,1})
+          # twist strength
+          k = -0.0015
 
-  
-  Nx.concatenate([
-    girl_mapped, 
-    x_repaired |> Nx.multiply(4), 
-    y_repaired |> Nx.multiply(4), 
-    Nx.broadcast(255, {64,64,1}) |> Nx.multiply(1) |> Nx.subtract(Nx.multiply(0, girl_mapped)), 
-  ], axis: 2) |> Nx.reshape({1,64,64,4})
-end 
+          theta_src = theta |> Nx.subtract(Nx.multiply(k, r2))
 
+          {
+            center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.cos(theta_src))),
+            center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.sin(theta_src)))
+          }
+
+        :fish ->
+          size = 64
+          center = (size - 1) / 2
+
+          u = x |> Nx.subtract(center)
+          v = y |> Nx.subtract(center)
+          r = Nx.sqrt(Nx.add(Nx.multiply(u, u), Nx.multiply(v, v)))
+          theta = Nx.atan2(v, u)
+
+          r_source = Nx.pow(r, 1.8) |> Nx.multiply(0.1)
+
+          {
+            center |> Nx.add(Nx.multiply(r_source, Nx.cos(theta))),
+            center |> Nx.add(Nx.multiply(r_source, Nx.sin(theta)))
+          }
+
+        _ ->
+          {x, y}
+      end
+
+    x_repaired =
+      mapped_x
+      |> Nx.round()
+      |> Nx.as_type({:s, 32})
+      |> Nx.remainder(64)
+      |> Nx.add(64)
+      |> Nx.remainder(64)
+
+    y_repaired =
+      mapped_y
+      |> Nx.round()
+      |> Nx.as_type({:s, 32})
+      |> Nx.remainder(64)
+      |> Nx.add(64)
+      |> Nx.remainder(64)
+
+    xy = y_repaired |> Nx.multiply(64) |> Nx.add(x_repaired)
+
+    girl_mapped = girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy) |> Nx.reshape({64, 64, 1})
+
+    Nx.concatenate(
+      [
+        girl_mapped,
+        x_repaired |> Nx.multiply(4),
+        y_repaired |> Nx.multiply(4),
+        Nx.broadcast(255, {64, 64, 1})
+        |> Nx.multiply(1)
+        |> Nx.subtract(Nx.multiply(0, girl_mapped))
+      ],
+      axis: 2
+    )
+    |> Nx.reshape({1, 64, 64, 4})
+  end
 
 results
 |> KinoZoetrope.TensorStack.new(
-  titel: "Green: X, Blue: Y, Red: Source", 
-  labels: (for m <- effects, do: "Remapped: #{m}"),
+  titel: "Green: X, Blue: Y, Red: Source",
+  labels: for(m <- effects, do: "Remapped: #{m}"),
   cmap: "viridis"
 )
 ```
@@ -1248,142 +1534,181 @@ results
 ## Bilinear Sampling
 
 ```elixir
-x = Nx.iota({1,64,1}) |> Nx.broadcast({64,64,1})
-y = Nx.iota({64,1,1}) |> Nx.broadcast({64,64,1})
+x = Nx.iota({1, 64, 1}) |> Nx.broadcast({64, 64, 1})
+y = Nx.iota({64, 1, 1}) |> Nx.broadcast({64, 64, 1})
 
 eye_x = 25
 eye_y = 30
 
-effects = [:scaledup, :scaleddown, :shifted, :rot45, :rot90, :swirl, :warpscale, :fish]
+effects = [scaled: 10, shifted: 10, swirl: 10, warpscale: 10, fish: 10]
 
-results = for m <- effects do
+results =
+  for {m, steps} <- effects do
+    for s <- 0..(steps - 1) do
+      {mapped_x, mapped_y} =
+        case m do
+          :shifted ->
+            {
+              x |> Nx.multiply(1) |> Nx.add(32 + s),
+              y |> Nx.multiply(1) |> Nx.add(32 - s)
+            }
 
-  {mapped_x, mapped_y} = case m do
-  :shifted -> 
-    {
-      x |> Nx.multiply(1) |> Nx.add(32), 
-      y |> Nx.multiply(1) |> Nx.add(32)
-    }
-  :scaleddown -> 
-    {
-      x |> Nx.subtract(32) |> Nx.multiply(1.8) |> Nx.add(32), 
-      y |> Nx.subtract(32) |> Nx.multiply(1.8) |> Nx.add(32)
-    }
-  :scaledup -> 
-    {
-      x |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32), 
-      y |> Nx.subtract(32) |> Nx.multiply(0.5) |> Nx.add(32)
-    }
-  :warpscale -> 
-    {
-      x |> Nx.subtract(32) |> Nx.abs() |> Nx.multiply(1/4.0) |> Nx.pow(1/0.6) |> Nx.multiply(x |> Nx.subtract(32) |> Nx.sign()) |> Nx.add(32), 
-      y |> Nx.subtract(32) |> Nx.abs() |> Nx.multiply(1/4.0) |> Nx.pow(1/0.6) |> Nx.multiply(y |> Nx.subtract(32) |> Nx.sign())  |> Nx.add(32)
-    }
-  :rot45 -> 
-    {
-      x |> Nx.subtract(eye_x) |> Nx.multiply(+1) |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1)) |> Nx.multiply(:math.sqrt(2)/2) |> Nx.add(eye_x),
-      y |> Nx.subtract(eye_y) |> Nx.multiply(+1) |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1)) |> Nx.multiply(:math.sqrt(2)/2) |> Nx.add(eye_y)
-    }
-  :rot90-> 
-    {
-      x |> Nx.subtract(eye_x) |> Nx.multiply(0) |> Nx.add(Nx.multiply(Nx.subtract(y, eye_y), -1)) |> Nx.add(eye_x),
-      y |> Nx.subtract(eye_y) |> Nx.multiply(0) |> Nx.add(Nx.multiply(Nx.subtract(x, eye_x), +1)) |> Nx.add(eye_y)
-    }
-  :swirl -> 
-      size = 64
-      center = (size - 1) / 2
-    
-      u = x |> Nx.subtract(center)
-      v = y |> Nx.subtract(center)
-      r2 = Nx.add(Nx.multiply(u, u), Nx.multiply(v, v))
-      theta = Nx.atan2(v, u)
-      
-      k = -0.0015  # twist strength
-      
-      theta_src = theta |> Nx.subtract(Nx.multiply(k, r2))
+          :scaled ->
+            {
+              x |> Nx.subtract(32) |> Nx.multiply(2 - s / 5) |> Nx.add(32),
+              y |> Nx.subtract(32) |> Nx.multiply(2 - s / 5) |> Nx.add(32)
+            }
 
-      {
-        center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.cos(theta_src))),
-        center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.sin(theta_src)))
-      }
-  :fish -> 
-      size = 64
-      center = (size - 1) / 2
-    
-      u = x |> Nx.subtract(center)
-      v = y |> Nx.subtract(center)
-      r = Nx.sqrt(Nx.add(Nx.multiply(u, u), Nx.multiply(v, v)))
-      theta = Nx.atan2(v, u)
-            
-      r_source =Nx.pow(r, 1.8) |> Nx.multiply(0.1)
+          :warpscale ->
+            {
+              x
+              |> Nx.subtract(32)
+              |> Nx.abs()
+              |> Nx.multiply(1 / (4.0 + s))
+              |> Nx.pow(1 / (0.6 / (s / 5 + 1)))
+              |> Nx.multiply(x |> Nx.subtract(32) |> Nx.sign())
+              |> Nx.add(32),
+              y
+              |> Nx.subtract(32)
+              |> Nx.abs()
+              |> Nx.multiply(1 / (4.0 + s))
+              |> Nx.pow(1 / (0.6 / (s / 5 + 1)))
+              |> Nx.multiply(y |> Nx.subtract(32) |> Nx.sign())
+              |> Nx.add(32)
+            }
 
-      {
-        center |> Nx.add(Nx.multiply(r_source, Nx.cos(theta))),
-        center |> Nx.add(Nx.multiply(r_source, Nx.sin(theta)))
-      }
+          :swirl ->
+            size = 64
+            center = (size - 1) / 2
 
-    _ -> {x,y}
+            u = x |> Nx.subtract(center)
+            v = y |> Nx.subtract(center)
+            r2 = Nx.add(Nx.multiply(u, u), Nx.multiply(v, v))
+            theta = Nx.atan2(v, u)
 
-end
+            # twist strength
+            k = -0.0015 - 0.001 * s
 
+            theta_src = theta |> Nx.subtract(Nx.multiply(k, r2))
 
-  x_floored = mapped_x |> Nx.floor() |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64) |> Nx.remainder(64)
-  y_floored = mapped_y |> Nx.floor() |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64) |> Nx.remainder(64)
-  x_ceiled  = mapped_x |> Nx.ceil()  |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64) |> Nx.remainder(64)
-  y_ceiled  = mapped_y |> Nx.ceil()  |> Nx.as_type({:s, 32}) |> Nx.remainder(64) |> Nx.add(64) |> Nx.remainder(64)
+            {
+              center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.cos(theta_src))),
+              center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.sin(theta_src)))
+            }
 
-  x_frac = mapped_x |> Nx.as_type({:f, 32}) |> Nx.subtract(Nx.floor(mapped_x)) 
-  y_frac = mapped_y |> Nx.as_type({:f, 32}) |> Nx.subtract(Nx.floor(mapped_y))
-  
-  xy00 = y_floored |> Nx.multiply(64) |> Nx.add(x_floored)
-  xy10 = y_floored |> Nx.multiply(64) |> Nx.add(x_ceiled)
-  xy01 = y_ceiled  |> Nx.multiply(64) |> Nx.add(x_floored)
-  xy11 = y_ceiled  |> Nx.multiply(64) |> Nx.add(x_ceiled)
+          :fish ->
+            size = 64
+            center = (size - 1) / 2
 
-  
-  girl_mapped_00 = girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy00) |> Nx.reshape({64,64,1})
-  girl_mapped_10 = girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy10) |> Nx.reshape({64,64,1})
-  girl_mapped_01 = girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy01) |> Nx.reshape({64,64,1})
-  girl_mapped_11 = girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy11) |> Nx.reshape({64,64,1})
+            u = x |> Nx.subtract(center)
+            v = y |> Nx.subtract(center)
+            r = Nx.sqrt(Nx.add(Nx.multiply(u, u), Nx.multiply(v, v)))
+            theta = Nx.atan2(v, u)
 
-  girl_mapped_y0 =  Nx.add(
-    Nx.multiply(girl_mapped_01, y_frac),
-    Nx.multiply(girl_mapped_00, Nx.subtract(1, y_frac))
-  )
-  
-  girl_mapped_y1 =  Nx.add(
-    Nx.multiply(girl_mapped_11, y_frac),
-    Nx.multiply(girl_mapped_10, Nx.subtract(1, y_frac))
-  )
-  
-  girl_mapped = Nx.add(
-    Nx.multiply(girl_mapped_y1, x_frac),
-    Nx.multiply(girl_mapped_y0, Nx.subtract(1, x_frac))
-  ) 
+            r_source = Nx.pow(r, 1 + s / 8) |> Nx.multiply(0.5 / (s + 1))
 
-  coord_mapped_x =  Nx.add(
-    Nx.multiply(x_ceiled, x_frac),
-    Nx.multiply(x_floored, Nx.subtract(1, x_frac))
-  )
-  
-  coord_mapped_y =  Nx.add(
-    Nx.multiply(y_ceiled, y_frac),
-    Nx.multiply(y_floored, Nx.subtract(1, y_frac))
-  )
+            {
+              center |> Nx.add(Nx.multiply(r_source, Nx.cos(theta))),
+              center |> Nx.add(Nx.multiply(r_source, Nx.sin(theta)))
+            }
 
-  Nx.concatenate([
-    girl_mapped, 
-    coord_mapped_x |> Nx.multiply(4), 
-    coord_mapped_y |> Nx.multiply(4), 
-    Nx.broadcast(255, {64,64,1}), 
-  ], axis: 2) |> Nx.reshape({1,64,64,4})
-end 
+          _ ->
+            {x, y}
+        end
 
+      x_floored =
+        mapped_x
+        |> Nx.floor()
+        |> Nx.as_type({:s, 32})
+        |> Nx.remainder(64)
+        |> Nx.add(64)
+        |> Nx.remainder(64)
 
-[girl_bw|results]
+      y_floored =
+        mapped_y
+        |> Nx.floor()
+        |> Nx.as_type({:s, 32})
+        |> Nx.remainder(64)
+        |> Nx.add(64)
+        |> Nx.remainder(64)
+
+      x_ceiled =
+        mapped_x
+        |> Nx.ceil()
+        |> Nx.as_type({:s, 32})
+        |> Nx.remainder(64)
+        |> Nx.add(64)
+        |> Nx.remainder(64)
+
+      y_ceiled =
+        mapped_y
+        |> Nx.ceil()
+        |> Nx.as_type({:s, 32})
+        |> Nx.remainder(64)
+        |> Nx.add(64)
+        |> Nx.remainder(64)
+
+      x_frac = mapped_x |> Nx.as_type({:f, 32}) |> Nx.subtract(Nx.floor(mapped_x))
+      y_frac = mapped_y |> Nx.as_type({:f, 32}) |> Nx.subtract(Nx.floor(mapped_y))
+
+      xy00 = y_floored |> Nx.multiply(64) |> Nx.add(x_floored)
+      xy10 = y_floored |> Nx.multiply(64) |> Nx.add(x_ceiled)
+      xy01 = y_ceiled |> Nx.multiply(64) |> Nx.add(x_floored)
+      xy11 = y_ceiled |> Nx.multiply(64) |> Nx.add(x_ceiled)
+
+      girl_mapped_00 = girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy00) |> Nx.reshape({64, 64, 1})
+      girl_mapped_10 = girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy10) |> Nx.reshape({64, 64, 1})
+      girl_mapped_01 = girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy01) |> Nx.reshape({64, 64, 1})
+      girl_mapped_11 = girl_bw |> Nx.reshape({:auto}) |> Nx.take(xy11) |> Nx.reshape({64, 64, 1})
+
+      girl_mapped_y0 =
+        Nx.add(
+          Nx.multiply(girl_mapped_01, y_frac),
+          Nx.multiply(girl_mapped_00, Nx.subtract(1, y_frac))
+        )
+
+      girl_mapped_y1 =
+        Nx.add(
+          Nx.multiply(girl_mapped_11, y_frac),
+          Nx.multiply(girl_mapped_10, Nx.subtract(1, y_frac))
+        )
+
+      girl_mapped =
+        Nx.add(
+          Nx.multiply(girl_mapped_y1, x_frac),
+          Nx.multiply(girl_mapped_y0, Nx.subtract(1, x_frac))
+        )
+
+      coord_mapped_x =
+        Nx.add(
+          Nx.multiply(x_ceiled, x_frac),
+          Nx.multiply(x_floored, Nx.subtract(1, x_frac))
+        )
+
+      coord_mapped_y =
+        Nx.add(
+          Nx.multiply(y_ceiled, y_frac),
+          Nx.multiply(y_floored, Nx.subtract(1, y_frac))
+        )
+
+      Nx.concatenate(
+        [
+          girl_mapped,
+          coord_mapped_x |> Nx.multiply(4),
+          coord_mapped_y |> Nx.multiply(4),
+          Nx.broadcast(255, {64, 64, 1})
+        ],
+        axis: 2
+      )
+      |> Nx.reshape({1, 64, 64, 4})
+    end
+    |> Nx.concatenate(axis: 0)
+  end
+
+[girl_bw | results]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Green: X, Blue: Y, Red: Source", 
-  labels: ["original"| (for m <- effects, do: "#{m}")],
+  titel: "Green: X, Blue: Y, Red: Source",
+  labels: ["original" | for({m, _} <- effects, do: "#{m}")],
   cmap: "viridis"
 )
 ```
