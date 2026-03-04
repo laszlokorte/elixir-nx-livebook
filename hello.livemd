@@ -1231,7 +1231,7 @@ y = Nx.iota({64, 1, 1}) |> Nx.broadcast({64, 64, 1})
 eye_x = 25
 eye_y = 30
 
-effects = [:scaledup, :scaleddown, :shifted, :rot45, :rot90, :swirl, :warpscale, :fish]
+effects = [:shifted, :scaledup, :scaleddown, :rot45, :rot90, :swirl, :warpscale, :fish]
 
 results =
   for m <- effects do
@@ -1310,12 +1310,13 @@ results =
           u = x |> Nx.subtract(center)
           v = y |> Nx.subtract(center)
           r2 = Nx.add(Nx.multiply(u, u), Nx.multiply(v, v))
+          r = Nx.sqrt(r2)
           theta = Nx.atan2(v, u)
 
           # twist strength
-          k = -0.0015
+          k = -0.05
 
-          theta_src = theta |> Nx.subtract(Nx.multiply(k, r2))
+          theta_src = theta |> Nx.subtract(Nx.multiply(k, r))
 
           {
             center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.cos(theta_src))),
@@ -1378,7 +1379,7 @@ y = Nx.iota({64, 1, 1}) |> Nx.broadcast({64, 64, 1})
 eye_x = 25
 eye_y = 30
 
-effects = [:scaledup, :scaleddown, :shifted, :rot45, :rot90, :swirl, :warpscale, :fish]
+effects = [:shifted, :scaledup, :scaleddown, :rot45, :rot90, :swirl, :warpscale, :fish]
 
 results =
   for m <- effects do
@@ -1457,12 +1458,13 @@ results =
           u = x |> Nx.subtract(center)
           v = y |> Nx.subtract(center)
           r2 = Nx.add(Nx.multiply(u, u), Nx.multiply(v, v))
+          r = Nx.sqrt(r2)
           theta = Nx.atan2(v, u)
 
           # twist strength
-          k = -0.0015
+          k = -0.05
 
-          theta_src = theta |> Nx.subtract(Nx.multiply(k, r2))
+          theta_src = theta |> Nx.subtract(Nx.multiply(k, r))
 
           {
             center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.cos(theta_src))),
@@ -1525,13 +1527,13 @@ results =
 
 results
 |> KinoZoetrope.TensorStack.new(
-  titel: "Green: X, Blue: Y, Red: Source",
+  titel: "Geometric Transforms (Green: Source X, Blue: Source Y, Red: Source Value)",
   labels: for(m <- effects, do: "Remapped: #{m}"),
   cmap: "viridis"
 )
 ```
 
-## Bilinear Sampling
+## Animated Geometric Transform
 
 ```elixir
 x = Nx.iota({1, 64, 1}) |> Nx.broadcast({64, 64, 1})
@@ -1540,7 +1542,7 @@ y = Nx.iota({64, 1, 1}) |> Nx.broadcast({64, 64, 1})
 eye_x = 25
 eye_y = 30
 
-effects = [scaled: 10, shifted: 10, swirl: 10, warpscale: 10, fish: 10]
+effects = [shifted: 10, scaled: 10, rotated: 10, swirl: 10, warpscale: 10, fish: 10]
 
 results =
   for {m, steps} <- effects do
@@ -1557,6 +1559,23 @@ results =
             {
               x |> Nx.subtract(32) |> Nx.multiply(2 - s / 5) |> Nx.add(32),
               y |> Nx.subtract(32) |> Nx.multiply(2 - s / 5) |> Nx.add(32)
+            }
+
+          :rotated ->
+            size = 64
+            center = (size - 1) / 2
+
+            u = x |> Nx.subtract(center)
+            v = y |> Nx.subtract(center)
+            r2 = Nx.add(Nx.multiply(u, u), Nx.multiply(v, v))
+            r = Nx.sqrt(r2)
+            theta = Nx.atan2(v, u)
+
+            theta_src = theta |> Nx.add(0.1 * s)
+
+            {
+              center |> Nx.add(Nx.multiply(r, Nx.cos(theta_src))),
+              center |> Nx.add(Nx.multiply(r, Nx.sin(theta_src)))
             }
 
           :warpscale ->
@@ -1584,16 +1603,16 @@ results =
             u = x |> Nx.subtract(center)
             v = y |> Nx.subtract(center)
             r2 = Nx.add(Nx.multiply(u, u), Nx.multiply(v, v))
+            r = Nx.sqrt(r2)
             theta = Nx.atan2(v, u)
 
-            # twist strength
-            k = -0.0015 - 0.001 * s
+            k = -0.02 * s
 
-            theta_src = theta |> Nx.subtract(Nx.multiply(k, r2))
+            theta_src = theta |> Nx.subtract(Nx.multiply(k, r))
 
             {
-              center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.cos(theta_src))),
-              center |> Nx.add(Nx.multiply(Nx.sqrt(r2), Nx.sin(theta_src)))
+              center |> Nx.add(Nx.multiply(r, Nx.cos(theta_src))),
+              center |> Nx.add(Nx.multiply(r, Nx.sin(theta_src)))
             }
 
           :fish ->
@@ -1707,7 +1726,7 @@ results =
 
 [girl_bw | results]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Green: X, Blue: Y, Red: Source",
+  titel: "Animated Transforms with Bilinear Mapping (Green: Source X, Blue: Source Y, Red: Source Value)",
   labels: ["original" | for({m, _} <- effects, do: "#{m}")],
   cmap: "viridis"
 )
