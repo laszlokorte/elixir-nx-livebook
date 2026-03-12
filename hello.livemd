@@ -36,6 +36,29 @@ Nx.tensor([1,2,3,4,5,6])
 
 ```elixir
 Nx.tensor([1, 2, 3, 4, 5, 6])
+|> Nx.to_list()
+```
+
+```elixir
+Nx.tensor([1, 2, 3, 4, 5, 6])
+|> Nx.reshape({2, 3, 1})
+|> Nx.to_list()
+```
+
+```elixir
+Nx.tensor([1, 2, 3, 4, 5, 6])
+|> Nx.reshape({2, 3, 1})
+|> Nx.to_flat_list()
+```
+
+```elixir
+Nx.tensor([[1, 2], [3, 4], [5, 6]])
+# ask the tensor for its shape
+|> Nx.shape()
+```
+
+```elixir
+Nx.tensor([1, 2, 3, 4, 5, 6])
 |> Nx.reshape({3, 2})
 # new dimensions can be added
 |> Nx.new_axis(-1)
@@ -64,9 +87,17 @@ Nx.tensor([1, 2, 3, 4, 5, 6])
 ```
 
 ```elixir
-Nx.tensor([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+Nx.tensor([2, 4, 6, 8, 12, 10, 11, 9, 7, 5, 3, 1])
+|> Nx.reshape({4, :auto})
+# output tensor as colored unicode characters
+# works in terminal
+|> Nx.to_heatmap()
+```
+
+```elixir
+Nx.tensor([2, 4, 6, 8, 12, 10, 11, 9, 7, 5, 3, 1])
 |> Nx.reshape({4, :auto, 1})
-# We can view 2d, 3d and 4d tensors as bitmap images
+# We can view 2d, 3d and 4d tensors as actual bitmap images
 |> KinoZoetrope.TensorStack.new(titel: "A tensor plotted as 2D grayscale bitmap")
 ```
 
