@@ -5,11 +5,11 @@
 ```elixir
 Mix.install([
   {:nx, "~> 0.11.0"},
-  {:kino, "~> 0.18.0"},
+  {:kino, "~> 0.19.0"},
   {:image, "~> 0.62.1"},
   {:kino_vega_lite, "~> 0.1.9"},
   {:tucan, "~> 0.5.1"},
-  {:kino_zoetrope, "~> 0.16.0"}
+  {:kino_zoetrope, "~> 0.17.0"}
 ])
 
 Kino.nothing()
@@ -1085,6 +1085,7 @@ non_max_suppressed =
     "Thin Edge Orientation",
     "Thin Edge Intensity"
   ],
+  size: 200,
   cmaps: [nil, nil, "viridis", "managua", "managua", nil, "hsv", nil]
 )
 ```
@@ -1762,10 +1763,69 @@ results =
 
 [girl_bw | results]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Animated Transforms with Bilinear Mapping (Green: Source X, Blue: Source Y, Red: Source Value)",
+  titel:
+    "Animated Transforms with Bilinear Mapping (Green: Source X, Blue: Source Y, Red: Source Value)",
   labels: ["original" | for({m, _} <- effects, do: "#{m}")],
   cmap: "viridis",
   size: 250,
   legend: false
 )
+```
+
+## Gradient
+
+```elixir
+grid = {Nx.iota({1, 64, 64}, axis: 1), Nx.iota({1, 64, 64}, axis: 2)}
+
+img = fn {x, y} ->
+  Nx.add(Nx.pow(Nx.subtract(x, 32), 2), Nx.pow(Nx.subtract(y, 32), 2))
+  |> Nx.negate()
+  |> Nx.divide(64)
+  |> Nx.exp()
+end
+
+g =
+  grid
+  |> Nx.Defn.grad(img)
+  |> Tuple.to_list()
+  |> then(&[img.(grid) | &1])
+  |> KinoZoetrope.TensorStack.new(
+    titel: "Partial derivatives",
+    cmap: "viridis",
+    labels: ["Gaussian", "∂x", "∂y"],
+    size: 240,
+    legend: true,
+    legend_markers: false,
+    legend_labels: false,
+    show_meta: false
+  )
+```
+
+```elixir
+size = {t, w, h} = {16, 64, 64}
+grid = for(ax <- 0..(tuple_size(size) - 1), do: Nx.iota(size, axis: ax)) |> List.to_tuple()
+
+img = fn {z, x, y} ->
+  Nx.add(Nx.pow(Nx.subtract(x, 32), 2), Nx.pow(Nx.subtract(y, 32), 2))
+  |> Nx.negate()
+  |> Nx.divide(Nx.sqrt(Nx.add(Nx.pow(w, 2), Nx.pow(h, 2))))
+  |> Nx.divide(Nx.add(z, 1))
+  |> Nx.exp()
+end
+
+g =
+  grid
+  |> Nx.Defn.grad(img)
+  |> Tuple.to_list()
+  |> then(&[img.(grid) | &1])
+  |> KinoZoetrope.TensorStack.new(
+    titel: "Partial derivatives",
+    cmap: "viridis",
+    labels: ["Gaussian", "∂t", "∂x", "∂y"],
+    size: 300,
+    legend: true,
+    legend_markers: false,
+    legend_labels: false,
+    show_meta: false
+  )
 ```
