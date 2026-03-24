@@ -1830,7 +1830,7 @@ g =
   )
 ```
 
-## Esher
+## M. C. Escher
 
 ```elixir
 droste =
@@ -1840,7 +1840,7 @@ droste =
     |> Nx.from_binary(:u8)
     |> Nx.reshape({1, 460, 460, 4})
     |> Nx.mean(axes: [3])
-   |> Nx.slice([0,4,4],[1, 442,442])
+    |> Nx.slice([0, 4, 4], [1, 442, 442])
   end
 
 droste
@@ -1959,22 +1959,22 @@ PolarMap.map(droste, fn z ->
   z
   |> Nx.add(Nx.Constants.epsilon(:f32))
   |> Nx.log()
-  |> Nx.multiply(Nx.complex(1, :math.pi() / 9.9))
+  |> Nx.multiply(Nx.complex(1.1, :math.pi() / 7))
   |> then(
     &Nx.complex(
-      Nx.real(&1) |> Nx.remainder(2) |> Nx.add(2) |> Nx.remainder(2),
-      Nx.imag(&1) |> Nx.remainder(2 * :math.pi())
+      Nx.real(&1),
+      Nx.imag(&1) |> Nx.remainder(4)
     )
   )
   |> Nx.exp()
-  |> Nx.multiply(0.2)
+  |> Nx.multiply(0.5)
 end)
 |> Nx.concatenate()
 |> Nx.negate()
 |> Nx.add(255)
 |> KinoZoetrope.TensorStack.new(
   titel: "Polar Transformation",
-  labels: ["Esher-like spiral"],
+  labels: ["M.C.Escher-like spiral"],
   cmaps: ["greys"],
   size: 250,
   legend: false
