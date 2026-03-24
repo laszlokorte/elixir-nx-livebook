@@ -1,4 +1,4 @@
-<!-- livebook:{"file_entries":[{"name":"hex.png","type":"attachment"},{"name":"perlgirl.png","type":"attachment"}]} -->
+<!-- livebook:{"file_entries":[{"name":"droste.png","type":"attachment"},{"name":"droste2_3b1b.png","type":"attachment"},{"name":"hex.png","type":"attachment"},{"name":"perlgirl.png","type":"attachment"}]} -->
 
 # Introduction to Elixir Nx
 
@@ -9,7 +9,7 @@ Mix.install([
   {:image, "~> 0.62.1"},
   {:kino_vega_lite, "~> 0.1.9"},
   {:tucan, "~> 0.5.1"},
-  {:kino_zoetrope, "~> 0.17.0"}
+  {:kino_zoetrope, "~> 0.21.0"}
 ])
 
 Kino.nothing()
@@ -1828,4 +1828,155 @@ g =
     legend_labels: false,
     show_meta: false
   )
+```
+
+## Esher
+
+```elixir
+droste =
+  with {:ok, droste_file} <- Image.open(Kino.FS.file_path("droste2_3b1b.png")),
+       {:ok, droste_bin} <- Vix.Vips.Image.write_to_binary(droste_file) do
+    droste_bin
+    |> Nx.from_binary(:u8)
+    |> Nx.reshape({1, 460, 460, 4})
+    |> Nx.mean(axes: [3])
+   |> Nx.slice([0,4,4],[1, 442,442])
+  end
+
+droste
+|> KinoZoetrope.TensorStack.new(
+  titel: "A droste image",
+  size: 500,
+  resize: true
+)
+```
+
+```elixir
+defmodule PolarMap do
+  def map(img, fun) do
+    map(img, 0..0, fn i, _s -> fun.(i) end)
+  end
+
+  def map(img, steps, fun) do
+    for s <- steps do
+      {1, h, w} = Nx.shape(img)
+
+      x =
+        Nx.iota({1, w, 1})
+        |> Nx.broadcast({h, w, 1})
+        |> Nx.divide(w)
+        |> Nx.subtract(0.5)
+        |> Nx.multiply(2)
+
+      y =
+        Nx.iota({h, 1, 1})
+        |> Nx.broadcast({h, w, 1})
+        |> Nx.divide(h)
+        |> Nx.subtract(0.5)
+        |> Nx.multiply(2)
+
+      pos =
+        Nx.complex(x, y) |> fun.(s)
+
+      mapped_x = Nx.real(pos) |> Nx.divide(2) |> Nx.add(0.5) |> Nx.multiply(w)
+
+      mapped_y = Nx.imag(pos) |> Nx.divide(2) |> Nx.add(0.5) |> Nx.multiply(h)
+
+      x_floored =
+        mapped_x
+        |> Nx.floor()
+        |> Nx.as_type({:s, 32})
+        |> Nx.remainder(w)
+        |> Nx.add(w)
+        |> Nx.remainder(w)
+
+      y_floored =
+        mapped_y
+        |> Nx.floor()
+        |> Nx.as_type({:s, 32})
+        |> Nx.remainder(h)
+        |> Nx.add(h)
+        |> Nx.remainder(h)
+
+      x_ceiled =
+        mapped_x
+        |> Nx.ceil()
+        |> Nx.as_type({:s, 32})
+        |> Nx.remainder(w)
+        |> Nx.add(w)
+        |> Nx.remainder(w)
+
+      y_ceiled =
+        mapped_y
+        |> Nx.ceil()
+        |> Nx.as_type({:s, 32})
+        |> Nx.remainder(h)
+        |> Nx.add(h)
+        |> Nx.remainder(h)
+
+      x_frac = mapped_x |> Nx.as_type({:f, 32}) |> Nx.subtract(Nx.floor(mapped_x))
+      y_frac = mapped_y |> Nx.as_type({:f, 32}) |> Nx.subtract(Nx.floor(mapped_y))
+
+      xy00 = y_floored |> Nx.multiply(w) |> Nx.add(x_floored)
+      xy10 = y_floored |> Nx.multiply(w) |> Nx.add(x_ceiled)
+      xy01 = y_ceiled |> Nx.multiply(w) |> Nx.add(x_floored)
+      xy11 = y_ceiled |> Nx.multiply(w) |> Nx.add(x_ceiled)
+
+      img_mapped_00 = img |> Nx.reshape({:auto}) |> Nx.take(xy00) |> Nx.reshape({h, w, 1})
+      img_mapped_10 = img |> Nx.reshape({:auto}) |> Nx.take(xy10) |> Nx.reshape({h, w, 1})
+      img_mapped_01 = img |> Nx.reshape({:auto}) |> Nx.take(xy01) |> Nx.reshape({h, w, 1})
+      img_mapped_11 = img |> Nx.reshape({:auto}) |> Nx.take(xy11) |> Nx.reshape({h, w, 1})
+
+      img_mapped_y0 =
+        Nx.add(
+          Nx.multiply(img_mapped_01, y_frac),
+          Nx.multiply(img_mapped_00, Nx.subtract(1, y_frac))
+        )
+
+      img_mapped_y1 =
+        Nx.add(
+          Nx.multiply(img_mapped_11, y_frac),
+          Nx.multiply(img_mapped_10, Nx.subtract(1, y_frac))
+        )
+
+      img_mapped =
+        Nx.add(
+          Nx.multiply(img_mapped_y1, x_frac),
+          Nx.multiply(img_mapped_y0, Nx.subtract(1, x_frac))
+        )
+        |> Nx.reshape({1, h, w, 1})
+
+      img_mapped
+    end
+  end
+end
+
+Kino.nothing()
+```
+
+```elixir
+PolarMap.map(droste, fn z ->
+  z
+  |> Nx.add(Nx.Constants.epsilon(:f32))
+  |> Nx.log()
+  |> Nx.multiply(Nx.complex(1, :math.pi() / 9.9))
+  |> then(
+    &Nx.complex(
+      Nx.real(&1) |> Nx.remainder(2) |> Nx.add(2) |> Nx.remainder(2),
+      Nx.imag(&1) |> Nx.remainder(2 * :math.pi())
+    )
+  )
+  |> Nx.exp()
+  |> Nx.multiply(0.2)
+end)
+|> Nx.concatenate()
+|> Nx.negate()
+|> Nx.add(255)
+|> KinoZoetrope.TensorStack.new(
+  titel: "Polar Transformation",
+  labels: ["Esher-like spiral"],
+  cmaps: ["greys"],
+  size: 250,
+  legend: false
+)
 ```
