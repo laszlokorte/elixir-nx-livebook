@@ -2023,20 +2023,11 @@ zoomCenter = Nx.complex(0.5, 0.5) |> Nx.divide(256)
     end
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Transformation",
+  titel: "M.C. Escher Spiral",
   labels: ["Droste Base Image", "Polar Map", "Polar Map Rotated", "Escher Spiral"],
   cmap: nil,
-  size: 350,
+  size: 400,
   legend: false,
-  show_meta: false,
-  markers: [
-    %{
-      attrs: %{
-        "fill" => "red"
-      },
-      for: [0, 1, 2],
-      points: [{455, 455}]
-    }
-  ]
+  show_meta: false
 )
 ```
