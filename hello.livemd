@@ -10,17 +10,14 @@ Mix.install([
   {:kino_vega_lite, "~> 0.1.9"},
   {:tucan, "~> 0.5.1"},
   {:kino_zoetrope, "~> 0.21.0"},
-  {:exla, "~> 0.11.0"}
+  {:exla, "~> 0.11.0"},
+  {:fine, "0.1.4"}
 ])
 
 Kino.nothing()
 ```
 
 ## Nx.Tensor
-
-```elixir
-Nx.global_default_backend(EXLA.Backend)
-```
 
 The goal of this notebook is a playful introduction to image processing and tensor programming via Elixir Nx.
 
@@ -106,6 +103,12 @@ Nx.tensor([2, 4, 6, 8, 12, 10, 11, 9, 7, 5, 3, 1])
 |> KinoZoetrope.TensorStack.new(
   titel: "A tensor plotted as 2D grayscale bitmap"
 )
+```
+
+We can change the compute backend for Nx to do the calculations hardward accelerated on the GPU (if available) or CPU:
+
+```elixir
+Nx.global_default_backend(EXLA.Backend)
 ```
 
 ```elixir
