@@ -453,7 +453,7 @@ mask =
   |> Nx.divide(circle_radius)
   |> then(&Nx.select(Nx.is_nan(&1), 1, &1)),
 
-  # Spiral 
+  # Spiral
   1..40//2
   |> Enum.map(fn a ->
     circle_radius
@@ -537,7 +537,6 @@ Enum.zip(
   |> Nx.reshape({1, diam, diam, 1})
 end)
 |> Nx.concatenate(axis: 0)
-|> Nx.backend_transfer()
 |> Nx.less(10)
 |> KinoZoetrope.TensorStack.new(
   titel: "Animated Circular Mask",
@@ -567,7 +566,6 @@ end)
       |> Nx.reshape({1, diam, diam, 1})
   end)
   |> Nx.concatenate(axis: 0)
-  |> Nx.backend_transfer()
   |> Nx.sqrt()
 end)
 |> Nx.concatenate(axis: 3)
@@ -696,7 +694,6 @@ rgba_alpha_mask =
 girl_col =
   bin
   |> Nx.from_binary(:u8)
-  |> Nx.backend_transfer()
   |> Nx.reshape({1, 64, 64, 4})
 
 girl_bw =
@@ -727,7 +724,6 @@ girl_bw =
 hex_col =
   bin
   |> Nx.from_binary(:u8)
-  |> Nx.backend_transfer()
   |> Nx.reshape({1, :auto, 98, 4})
 
 hex_alpha = hex_col |> Nx.reshape({1, :auto, 98, 4}) |> Nx.slice_along_axis(3, 1, axis: 3)
@@ -856,7 +852,7 @@ Vl.new(width: 600, height: 400, title: "Slices across RGBA image")
 
 # |> Vl.mark(:bar, color: :teal)
 # |> Vl.encode(:x, field: :x, type: :nominal)
-# |> Vl.encode(:x_offset, field: :channel)  
+# |> Vl.encode(:x_offset, field: :channel)
 ```
 
 ```elixir
@@ -1157,7 +1153,6 @@ world =
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
   ])
   |> Nx.reshape({1, 12, 12, 1})
-  |> Nx.backend_transfer()
   |> Nx.transpose(axes: [0, 3, 1, 2])
 
 gol_filter =
