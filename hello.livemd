@@ -518,25 +518,33 @@ mask =
 ```
 
 ```elixir
-Enum.zip(
-  1..140 |> Enum.map(&(:math.sin(&1 / 3) * 20)),
-  20..140 |> Enum.map(&(:math.sin(&1 / 7) * 17))
-)
-|> Enum.map(fn {x, y} ->
-  Nx.add(
-    Nx.iota({1, diam, 1})
-    |> Nx.broadcast({diam, diam, 1})
-    |> Nx.subtract(rad + x)
-    |> Nx.pow(2),
-    Nx.iota({diam, 1, 1})
-    |> Nx.broadcast({diam, diam, 1})
-    |> Nx.subtract(rad + y)
-    |> Nx.pow(2)
+x = Nx.iota({1, 1, diam})
+y = Nx.iota({1, diam, 1})
+frame = Nx.iota({140, 1, 1})
+
+Nx.add(
+  x
+  |> Nx.subtract(rad)
+  |> Nx.subtract(
+    frame
+    |> Nx.add(0)
+    |> Nx.divide(3)
+    |> Nx.sin()
+    |> Nx.multiply(20)
   )
-  |> Nx.sqrt()
-  |> Nx.reshape({1, diam, diam, 1})
-end)
-|> Nx.concatenate(axis: 0)
+  |> Nx.pow(2),
+  y
+  |> Nx.subtract(rad)
+  |> Nx.subtract(
+    frame
+    |> Nx.divide(7)
+    |> Nx.add(20)
+    |> Nx.sin()
+    |> Nx.multiply(20)
+  )
+  |> Nx.pow(2)
+)
+|> Nx.sqrt()
 |> Nx.less(10)
 |> KinoZoetrope.TensorStack.new(
   titel: "Animated Circular Mask",
