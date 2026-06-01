@@ -9,7 +9,7 @@ Mix.install([
   {:image, "~> 0.62.1"},
   {:kino_vega_lite, "~> 0.1.9"},
   {:tucan, "~> 0.5.1"},
-  {:kino_zoetrope, "~> 0.24.0"},
+  {:kino_zoetrope, "~> 0.25.0"},
   {:exla, "~> 0.12.0"},
 ])
 
@@ -100,7 +100,7 @@ Nx.tensor([2, 4, 6, 8, 12, 10, 11, 9, 7, 5, 3, 1])
 |> Nx.reshape({4, :auto, 1})
 # We can view 2d, 3d and 4d tensors as actual bitmap images
 |> KinoZoetrope.TensorStack.new(
-  titel: "A tensor plotted as 2D grayscale bitmap"
+  title: "A tensor plotted as 2D grayscale bitmap"
 )
 ```
 
@@ -120,7 +120,7 @@ Nx.global_default_backend(EXLA.Backend)
   |> Nx.transpose(axes: [1, 0, 2])
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Some reshaped and transposed Tensors",
+  title: "Some reshaped and transposed Tensors",
   labels: ["3x4", "4x3", "2x6 with colormap", "transposed with colormap"],
   cmaps: [
     nil,
@@ -135,7 +135,7 @@ Nx.global_default_backend(EXLA.Backend)
 ```elixir
 Nx.broadcast(255, {64, 64, 1})
 |> KinoZoetrope.TensorStack.new(
-  titel: "64x64 from single value",
+  title: "64x64 from single value",
   vmin: 0,
   vmax: 255
 )
@@ -147,19 +147,19 @@ Nx.logical_xor(
   Nx.iota({64, 1, 1}) |> Nx.remainder(16) |> Nx.less(8)
 )
 |> Nx.logical_not()
-|> KinoZoetrope.TensorStack.new(titel: "Chess board")
+|> KinoZoetrope.TensorStack.new(title: "Chess board")
 ```
 
 ```elixir
 Nx.broadcast(128, {64, 64, 3})
 |> Nx.reshape({1, 64, 64, 3})
-|> KinoZoetrope.TensorStack.new(titel: "RGB image with all channels = 128 (gray)")
+|> KinoZoetrope.TensorStack.new(title: "RGB image with all channels = 128 (gray)")
 ```
 
 ```elixir
 Nx.broadcast(200, {64, 64, 4})
 |> Nx.reshape({1, 64, 64, 4})
-|> KinoZoetrope.TensorStack.new(titel: "RGBA image with all channels = 200 (gray transparent)")
+|> KinoZoetrope.TensorStack.new(title: "RGBA image with all channels = 200 (gray transparent)")
 ```
 
 ```elixir
@@ -172,7 +172,7 @@ Nx.stack([
   Nx.broadcast(20, {64, 64})
 ])
 |> KinoZoetrope.TensorStack.new(
-  titel: "Multiple images stacked to an animation",
+  title: "Multiple images stacked to an animation",
   labels: ["3D tensor"]
 )
 ```
@@ -207,7 +207,7 @@ Nx.stack([
     axis: 2
   )
 ])
-|> KinoZoetrope.TensorStack.new(titel: "Multiple RGBA images stacked")
+|> KinoZoetrope.TensorStack.new(title: "Multiple RGBA images stacked")
 ```
 
 ```elixir
@@ -260,7 +260,7 @@ Nx.stack([
   |> Nx.reshape({3, 64, 64, 1})
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Colored Pattern",
+  title: "Colored Pattern",
   labels: ["RGB", "Separate Channels"]
 )
 ```
@@ -271,7 +271,7 @@ Nx.stack([
   Nx.iota({64, 1, 1}) |> Nx.divide(63) |> Nx.broadcast({64, 64, 1})
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Gradients",
+  title: "Gradients",
   labels: ["Horizontal Gradient", "Vertical Gradient"]
 )
 ```
@@ -307,7 +307,7 @@ colormix =
   | 0..2 |> Enum.map(&Nx.take(colormix, Nx.tensor([&1]), axis: 3))
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Colorful gradient mixed from 3 channels",
+  title: "Colorful gradient mixed from 3 channels",
   labels: ["RGB", "Red", "Green", "Blue"],
   vmin: 0,
   vmax: 255
@@ -331,7 +331,7 @@ colormix
     axis: 3
   )
 )
-|> KinoZoetrope.TensorStack.new(titel: "Colorful gradient mixed from 3 channels")
+|> KinoZoetrope.TensorStack.new(title: "Colorful gradient mixed from 3 channels")
 ```
 
 ```elixir
@@ -347,7 +347,7 @@ end
 Nx.iota({7, 7, 1})
 |> UsingOperators.some_calculation()
 |> KinoZoetrope.TensorStack.new(
-  titel: "Some quadradic gradient",
+  title: "Some quadradic gradient",
   cmap: "copper"
 )
 ```
@@ -384,7 +384,7 @@ circle2_angle = Nx.atan2(dy2, dx2)
 
 [dx2, dy2, circle_radius, circle_angle, circle2_angle, circle_radius2]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Circular masked generated via thresholding",
+  title: "Circular masked generated via thresholding",
   labels: ["Distance y²", "Distance y²", "Radius", "Angle", "Angle Squared"],
   cmaps: [nil, nil, nil, "hsv", "hsv"]
 )
@@ -423,7 +423,7 @@ mask =
   mask |> Nx.logical_not()
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Circular masked generated via thresholding",
+  title: "Circular masked generated via thresholding",
   labels: [
     "Circle",
     "Inner",
@@ -492,7 +492,7 @@ mask =
   |> Nx.concatenate(axis: 0)
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Colorful Funny stuff",
+  title: "Colorful Funny stuff",
   labels: [
     "Ring",
     "Rings",
@@ -547,7 +547,7 @@ Nx.add(
 |> Nx.sqrt()
 |> Nx.less(10)
 |> KinoZoetrope.TensorStack.new(
-  titel: "Animated Circular Mask",
+  title: "Animated Circular Mask",
   cmap: "viridis"
 )
 ```
@@ -581,7 +581,7 @@ end)
 |> then(&Nx.subtract(&1, Nx.reduce_min(&1)))
 |> then(&Nx.divide(&1, Nx.reduce_max(&1)))
 |> Nx.multiply(255)
-|> KinoZoetrope.TensorStack.new(titel: "Animated Color channels", size: 360)
+|> KinoZoetrope.TensorStack.new(title: "Animated Color channels", size: 360)
 ```
 
 ```elixir
@@ -590,7 +590,7 @@ end)
   Nx.multiply(mask, colormix)
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Gradient cut with circular mask",
+  title: "Gradient cut with circular mask",
   labels: ["Color mix", "Masked Color Mix"]
 )
 ```
@@ -616,7 +616,7 @@ gaussian =
   |> Nx.exp()
 
 gaussian
-|> KinoZoetrope.TensorStack.new(titel: "Gaußian Mask / Filter of size #{size}x#{size}")
+|> KinoZoetrope.TensorStack.new(title: "Gaußian Mask / Filter of size #{size}x#{size}")
 ```
 
 ```elixir
@@ -686,7 +686,7 @@ rgba_alpha_mask =
   |> Nx.min(255)
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Color gradient multiplied with gaussien mask",
+  title: "Color gradient multiplied with gaussien mask",
   labels: [
     "Color channels multiplied",
     "Only blue channel masked out",
@@ -720,7 +720,7 @@ girl_bw =
   girl_bw
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Image read from the file system",
+  title: "Image read from the file system",
   labels: ["RGBA Image", "Single Channel (Slider)", "Grayscale (mean)"]
 )
 ```
@@ -761,7 +761,7 @@ hex_bw_alpha =
   hex_bw_alpha
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Elixir Hex Logo",
+  title: "Elixir Hex Logo",
   labels: [
     "RGBA Image",
     "Swapped Channels",
@@ -822,7 +822,7 @@ end
   ]
 )
 |> KinoZoetrope.TensorStack.new(
-  titel: "Blurred Color Image",
+  title: "Blurred Color Image",
   labels: [
     "Original RGBA",
     "Result RGBA",
@@ -934,7 +934,7 @@ for orient <- [:vertical, :horizontal] do
 end
 |> List.flatten()
 |> KinoZoetrope.TensorStack.new(
-  titel: "Edge Detection via Sobel Filter",
+  title: "Edge Detection via Sobel Filter",
   labels: [
     "Single Channel (slider)",
     "Vertical filter",
@@ -1027,7 +1027,7 @@ girl_edge_orient = Nx.atan2(verts, horts)
   |> Nx.multiply(girl_edge_orient)
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Edge Orientation",
+  title: "Edge Orientation",
   labels: [
     "Single Channel (slider)",
     "Vertical Result",
@@ -1089,7 +1089,7 @@ non_max_suppressed =
   non_max_suppressed |> Nx.multiply(girl_edge_mag) |> Nx.mean(axes: [0])
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Edge Orientation",
+  title: "Edge Orientation",
   labels: [
     "Single Channel (slider)",
     "Edge Magnitude",
@@ -1137,7 +1137,7 @@ gol_filter =
   gol_filter
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Game of Life",
+  title: "Game of Life",
   vmin: 0,
   vmax: 1,
   labels: ["World (inverted)", "Filter Kernel"]
@@ -1212,7 +1212,7 @@ end
   gol_filter |> Nx.reshape({1, 3, 3, 1})
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Game of Life",
+  title: "Game of Life",
   labels: ["World (Prev)", "World (next)", "Filter Kernel"],
   vmin: 0,
   vmax: 1
@@ -1268,7 +1268,7 @@ Stream.iterate(world, do_step)
 |> Enum.map(&Nx.reshape(Nx.subtract(1, &1), {1, 12, 12, 1}))
 |> Nx.concatenate()
 |> KinoZoetrope.TensorStack.new(
-  titel: "Game of Life",
+  title: "Game of Life",
   labels: ["World (Inverted)"]
 )
 ```
@@ -1417,7 +1417,7 @@ results =
 
 [girl_bw | results]
 |> KinoZoetrope.TensorStack.new(
-  titel: "Here we girl again",
+  title: "Here we girl again",
   labels: ["Original" | for(m <- effects, do: "Remapped: #{m}")],
   cmap: "viridis"
 )
@@ -1578,7 +1578,7 @@ results =
 
 results
 |> KinoZoetrope.TensorStack.new(
-  titel: "Geometric Transforms (Green: Source X, Blue: Source Y, Red: Source Value)",
+  title: "Geometric Transforms (Green: Source X, Blue: Source Y, Red: Source Value)",
   labels: for(m <- effects, do: "Remapped: #{m}"),
   cmap: "viridis",
   resize: true
@@ -1778,7 +1778,7 @@ results =
 
 [girl_bw | results]
 |> KinoZoetrope.TensorStack.new(
-  titel:
+  title:
     "Animated Transforms with Bilinear Mapping (Green: Source X, Blue: Source Y, Red: Source Value)",
   labels: ["original" | for({m, _} <- effects, do: "#{m}")],
   cmap: "viridis",
@@ -1805,7 +1805,7 @@ g =
   |> Tuple.to_list()
   |> then(&[img.(grid) | &1])
   |> KinoZoetrope.TensorStack.new(
-    titel: "Partial derivatives",
+    title: "Partial derivatives",
     cmap: "viridis",
     labels: ["Gaussian", "∂x", "∂y"],
     size: 240,
@@ -1834,7 +1834,7 @@ g =
   |> Tuple.to_list()
   |> then(&[img.(grid) | &1])
   |> KinoZoetrope.TensorStack.new(
-    titel: "Partial derivatives",
+    title: "Partial derivatives",
     cmap: "viridis",
     labels: ["Gaussian", "∂t", "∂x", "∂y"],
     size: 300,
@@ -2038,7 +2038,7 @@ zoomCenter = Nx.complex(0.5, 0.5) |> Nx.divide(256)
     end
 ]
 |> KinoZoetrope.TensorStack.new(
-  titel: "M.C. Escher Spiral",
+  title: "M.C. Escher Spiral",
   labels: ["Droste Base Image", "Polar Map", "Polar Map Rotated", "Escher Spiral"],
   cmap: nil,
   size: 400,
